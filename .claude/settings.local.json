@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(taskkill:*)",
+      "Bash(PORT=3002 npm run dev)"
     ],
     "deny": [],
     "ask": []

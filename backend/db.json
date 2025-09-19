@@ -1,0 +1,265 @@
+{
+  "users": [
+    {
+      "id": "user-admin-001",
+      "username": "admin",
+      "password": "admin123",
+      "email": "admin@tvcable.com",
+      "firstName": "Administrador",
+      "lastName": "Sistema",
+      "role": "admin",
+      "phone": "+51987654321",
+      "isActive": true,
+      "lastLogin": "2025-09-19T19:56:07.209Z",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "user-subadmin-001",
+      "username": "subadmin",
+      "password": "subadmin123",
+      "email": "subadmin@tvcable.com",
+      "firstName": "Sub Administrador",
+      "lastName": "Sistema",
+      "role": "subadmin",
+      "phone": "+51987654322",
+      "isActive": true,
+      "lastLogin": null,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "collector-1",
+      "username": "collector1",
+      "password": "collector123",
+      "email": "cobrador1@tvcable.com",
+      "firstName": "Carlos",
+      "lastName": "Rodríguez",
+      "role": "collector",
+      "phone": "+51987654323",
+      "isActive": true,
+      "lastLogin": null,
+      "neighborhoods": [
+        "San Isidro",
+        "Surco",
+        "San Miguel"
+      ],
+      "commissionRate": 0.05,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "clients": [
+    {
+      "id": "client-sim-001",
+      "fullName": "Juan Carlos Mendoza Rivera",
+      "dni": "70123456",
+      "phone": "+51987654321",
+      "email": "juan.mendoza@gmail.com",
+      "address": "Jr. Las Palmeras 123, San Isidro, Lima",
+      "neighborhood": "San Isidro",
+      "servicePlan": "premium",
+      "installationDate": "2025-08-27",
+      "preferredPaymentDay": 5,
+      "isActive": true,
+      "assignedCollector": "collector-1",
+      "notes": "Cliente instalado día 27 - MES GRATIS",
+      "billingType": "free",
+      "status": "active",
+      "balance": 0,
+      "lastPaymentDate": null,
+      "createdAt": "2025-08-27T00:00:00.000Z",
+      "updatedAt": "2025-08-27T00:00:00.000Z"
+    },
+    {
+      "id": "client-sim-002",
+      "fullName": "María Elena Castillo Vargas",
+      "dni": "70123457",
+      "phone": "+51987654322",
+      "email": "maria.castillo@hotmail.com",
+      "address": "Av. Primavera 456, Surco, Lima",
+      "neighborhood": "Surco",
+      "servicePlan": "standard",
+      "installationDate": "2025-08-15",
+      "preferredPaymentDay": 10,
+      "isActive": true,
+      "assignedCollector": "collector-1",
+      "notes": "Cliente instalado día 15 - PRORRATEO 16 días",
+      "billingType": "prorated",
+      "proratedDays": 16,
+      "status": "active",
+      "balance": 0,
+      "lastPaymentDate": null,
+      "createdAt": "2025-08-15T00:00:00.000Z",
+      "updatedAt": "2025-08-15T00:00:00.000Z"
+    }
+  ],
+  "services": [
+    {
+      "id": "service-basic",
+      "name": "Básico",
+      "description": "Plan básico de TV Cable",
+      "price": 25,
+      "channels": 40,
+      "internetSpeed": null,
+      "isActive": true,
+      "features": [
+        "Canales nacionales",
+        "Canales internacionales básicos"
+      ],
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "service-standard",
+      "name": "Estándar",
+      "description": "Plan estándar de TV Cable + Internet",
+      "price": 45,
+      "channels": 80,
+      "internetSpeed": "10 Mbps",
+      "isActive": true,
+      "features": [
+        "Canales nacionales",
+        "Canales internacionales",
+        "Internet 10 Mbps"
+      ],
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "service-premium",
+      "name": "Premium",
+      "description": "Plan premium de TV Cable + Internet de alta velocidad",
+      "price": 75,
+      "channels": 120,
+      "internetSpeed": "50 Mbps",
+      "isActive": true,
+      "features": [
+        "Canales nacionales",
+        "Canales internacionales",
+        "Canales premium",
+        "Internet 50 Mbps",
+        "Netflix incluido"
+      ],
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "payments": [],
+  "monthlyDebts": [],
+  "vouchers": [],
+  "cashboxes": [
+    {
+      "id": "cashbox-001",
+      "name": "Caja Principal",
+      "description": "Caja principal del sistema",
+      "currentBalance": 0,
+      "isActive": true,
+      "assignedUsers": [
+        "user-admin-001",
+        "user-subadmin-001"
+      ],
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "cashBoxRequests": [
+    {
+      "id": "request-2025-09-19-collector-1",
+      "collectorId": "collector-1",
+      "collectorName": "Carlos Rodríguez",
+      "requestDate": "2025-09-19T07:30:00.000Z",
+      "workDate": "2025-09-19",
+      "status": "pending",
+      "requestedInitialCash": {
+        "efectivo": 400.00,
+        "digital": {
+          "yape": 150.00,
+          "plin": 80.00,
+          "transferencia": 30.00,
+          "otros": 0
+        }
+      },
+      "notes": "Necesito efectivo adicional para zona San Isidro. Tengo instalaciones programadas.",
+      "createdAt": "2025-09-19T07:30:00.000Z",
+      "updatedAt": "2025-09-19T07:30:00.000Z"
+    },
+    {
+      "id": "request-2025-09-19-collector-2",
+      "collectorId": "collector-2",
+      "collectorName": "Pedro González",
+      "requestDate": "2025-09-19T08:00:00.000Z",
+      "workDate": "2025-09-19",
+      "status": "pending",
+      "requestedInitialCash": {
+        "efectivo": 300.00,
+        "digital": {
+          "yape": 100.00,
+          "plin": 50.00,
+          "transferencia": 20.00,
+          "otros": 0
+        }
+      },
+      "notes": "Ruta nueva en zona Miraflores. Principalmente servicios premium.",
+      "createdAt": "2025-09-19T08:00:00.000Z",
+      "updatedAt": "2025-09-19T08:00:00.000Z"
+    },
+    {
+      "id": "request-2025-09-18-collector-1",
+      "collectorId": "collector-1",
+      "collectorName": "Carlos Rodríguez",
+      "requestDate": "2025-09-18T18:00:00.000Z",
+      "workDate": "2025-09-19",
+      "status": "approved",
+      "requestedInitialCash": {
+        "efectivo": 500.00,
+        "digital": {
+          "yape": 200.00,
+          "plin": 100.00,
+          "transferencia": 50.00,
+          "otros": 0
+        }
+      },
+      "notes": "Solicitud para mañana. Zona mixta con instalaciones DUO.",
+      "approvedBy": "user-subadmin-001",
+      "approvalDate": "2025-09-18T19:30:00.000Z",
+      "createdAt": "2025-09-18T18:00:00.000Z",
+      "updatedAt": "2025-09-18T19:30:00.000Z"
+    }
+  ],
+  "notifications": [],
+  "clientExtended": [],
+  "backups": [],
+  "neighborhoods": [
+    {
+      "id": "neighborhood-001",
+      "name": "San Isidro",
+      "zone": "Centro",
+      "isActive": true
+    },
+    {
+      "id": "neighborhood-002",
+      "name": "Surco",
+      "zone": "Sur",
+      "isActive": true
+    },
+    {
+      "id": "neighborhood-003",
+      "name": "San Miguel",
+      "zone": "Norte",
+      "isActive": true
+    },
+    {
+      "id": "neighborhood-004",
+      "name": "Miraflores",
+      "zone": "Centro",
+      "isActive": true
+    },
+    {
+      "id": "neighborhood-005",
+      "name": "La Molina",
+      "zone": "Este",
+      "isActive": true
+    }
+  ]
+}

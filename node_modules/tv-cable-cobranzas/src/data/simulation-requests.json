@@ -1,0 +1,86 @@
+[
+  {
+    "id": "request-2024-01-16-collector-003",
+    "collectorId": "collector-003",
+    "collectorName": "Pedro González",
+    "requestDate": "2024-01-16T07:30:00.000Z",
+    "workDate": "2024-01-16",
+    "status": "pending",
+    "requestedInitialCash": {
+      "efectivo": 400.00,
+      "digital": {
+        "yape": 150.00,
+        "plin": 80.00,
+        "transferencia": 30.00,
+        "otros": 0
+      }
+    },
+    "notes": "Necesito efectivo adicional para zona comercial. Tengo instalaciones de Cable programadas.",
+    "createdAt": "2024-01-16T07:30:00.000Z",
+    "updatedAt": "2024-01-16T07:30:00.000Z"
+  },
+  {
+    "id": "request-2024-01-16-collector-004",
+    "collectorId": "collector-004", 
+    "collectorName": "Luis Mendoza",
+    "requestDate": "2024-01-16T08:00:00.000Z",
+    "workDate": "2024-01-16",
+    "status": "pending",
+    "requestedInitialCash": {
+      "efectivo": 300.00,
+      "digital": {
+        "yape": 100.00,
+        "plin": 50.00,
+        "transferencia": 20.00,
+        "otros": 0
+      }
+    },
+    "notes": "Ruta nueva en zona residencial. Principalmente servicios de Internet.",
+    "createdAt": "2024-01-16T08:00:00.000Z",
+    "updatedAt": "2024-01-16T08:00:00.000Z"
+  },
+  {
+    "id": "request-2024-01-15-collector-001",
+    "collectorId": "collector-001",
+    "collectorName": "Juan Pérez",
+    "requestDate": "2024-01-15T18:00:00.000Z",
+    "workDate": "2024-01-16",
+    "status": "approved",
+    "requestedInitialCash": {
+      "efectivo": 500.00,
+      "digital": {
+        "yape": 200.00,
+        "plin": 100.00,
+        "transferencia": 50.00,
+        "otros": 0
+      }
+    },
+    "notes": "Solicitud para mañana. Zona mixta con instalaciones DUO.",
+    "approvedBy": "subadmin-001",
+    "approvalDate": "2024-01-15T19:30:00.000Z",
+    "createdAt": "2024-01-15T18:00:00.000Z",
+    "updatedAt": "2024-01-15T19:30:00.000Z"
+  },
+  {
+    "id": "request-2024-01-15-collector-002",
+    "collectorId": "collector-002",
+    "collectorName": "María García",
+    "requestDate": "2024-01-15T17:45:00.000Z",
+    "workDate": "2024-01-16", 
+    "status": "approved",
+    "requestedInitialCash": {
+      "efectivo": 300.00,
+      "digital": {
+        "yape": 150.00,
+        "plin": 80.00,
+        "transferencia": 20.00,
+        "otros": 0
+      }
+    },
+    "notes": "Ruta de Internet principalmente. Clientes de zona norte.",
+    "approvedBy": "subadmin-001",
+    "approvalDate": "2024-01-15T18:15:00.000Z",
+    "createdAt": "2024-01-15T17:45:00.000Z",
+    "updatedAt": "2024-01-15T18:15:00.000Z"
+  }
+]

@@ -1,0 +1,451 @@
+{
+  "clients": [
+    {
+      "id": "client-sim-001",
+      "fullName": "Juan Carlos Mendoza Rivera",
+      "dni": "70123456",
+      "phone": "+51987654321",
+      "email": "juan.mendoza@gmail.com",
+      "address": "Jr. Las Palmeras 123, San Isidro, Lima",
+      "neighborhood": "San Isidro",
+      "servicePlan": "premium",
+      "installationDate": "2025-08-27",
+      "preferredPaymentDay": 5,
+      "isActive": true,
+      "assignedCollector": "collector-1",
+      "notes": "Cliente instalado día 27 - MES GRATIS",
+      "billingType": "free"
+    },
+    {
+      "id": "client-sim-002",
+      "fullName": "María Elena Castillo Vargas",
+      "dni": "70123457",
+      "phone": "+51987654322",
+      "email": "maria.castillo@hotmail.com",
+      "address": "Av. Primavera 456, Surco, Lima",
+      "neighborhood": "Surco",
+      "servicePlan": "standard",
+      "installationDate": "2025-08-15",
+      "preferredPaymentDay": 10,
+      "isActive": true,
+      "assignedCollector": "collector-1",
+      "notes": "Cliente instalado día 15 - PRORRATEO 16 días",
+      "billingType": "prorated",
+      "proratedDays": 16
+    },
+    {
+      "id": "client-sim-003",
+      "fullName": "Pedro Antonio Flores Guzmán",
+      "dni": "70123458",
+      "phone": "+51987654323",
+      "email": "pedro.flores@gmail.com",
+      "address": "Jr. Los Eucaliptos 789, La Molina, Lima",
+      "neighborhood": "La Molina",
+      "servicePlan": "basic",
+      "installationDate": "2025-08-28",
+      "preferredPaymentDay": 15,
+      "isActive": true,
+      "assignedCollector": "collector-1",
+      "notes": "Cliente instalado día 28 - MES GRATIS",
+      "billingType": "free"
+    },
+    {
+      "id": "client-sim-004",
+      "fullName": "Ana Lucía Ramírez Torres",
+      "dni": "70123459",
+      "phone": "+51987654324",
+      "email": "ana.ramirez@yahoo.com",
+      "address": "Av. Universitaria 1012, San Miguel, Lima",
+      "neighborhood": "San Miguel",
+      "servicePlan": "premium",
+      "installationDate": "2025-08-10",
+      "preferredPaymentDay": 20,
+      "isActive": true,
+      "assignedCollector": "collector-2",
+      "notes": "Cliente instalado día 10 - PRORRATEO 21 días",
+      "billingType": "prorated",
+      "proratedDays": 21
+    },
+    {
+      "id": "client-sim-005",
+      "fullName": "Carlos Alberto Soto Mendez",
+      "dni": "70123460",
+      "phone": "+51987654325",
+      "email": "carlos.soto@gmail.com",
+      "address": "Jr. Las Gardenias 345, Jesús María, Lima",
+      "neighborhood": "Jesús María",
+      "servicePlan": "standard",
+      "installationDate": "2025-08-26",
+      "preferredPaymentDay": 25,
+      "isActive": true,
+      "assignedCollector": "collector-2",
+      "notes": "Cliente instalado día 26 - MES GRATIS",
+      "billingType": "free"
+    },
+    {
+      "id": "client-sim-006",
+      "fullName": "Rosa Patricia Vega Luna",
+      "dni": "70123461",
+      "phone": "+51987654326",
+      "email": "rosa.vega@hotmail.com",
+      "address": "Av. Benavides 678, Miraflores, Lima",
+      "neighborhood": "Miraflores",
+      "servicePlan": "basic",
+      "installationDate": "2025-08-05",
+      "preferredPaymentDay": 5,
+      "isActive": true,
+      "assignedCollector": "collector-2",
+      "notes": "Cliente instalado día 5 - PRORRATEO 26 días",
+      "billingType": "prorated",
+      "proratedDays": 26
+    },
+    {
+      "id": "client-sim-007",
+      "fullName": "Miguel Ángel Paredes Rojas",
+      "dni": "70123462",
+      "phone": "+51987654327",
+      "email": "miguel.paredes@gmail.com",
+      "address": "Jr. Los Álamos 901, San Borja, Lima",
+      "neighborhood": "San Borja",
+      "servicePlan": "premium",
+      "installationDate": "2025-08-30",
+      "preferredPaymentDay": 10,
+      "isActive": true,
+      "assignedCollector": "collector-3",
+      "notes": "Cliente instalado día 30 - MES GRATIS",
+      "billingType": "free"
+    },
+    {
+      "id": "client-sim-008",
+      "fullName": "Claudia Fernanda Ríos Aguilar",
+      "dni": "70123463",
+      "phone": "+51987654328",
+      "email": "claudia.rios@yahoo.com",
+      "address": "Av. Salaverry 234, Lince, Lima",
+      "neighborhood": "Lince",
+      "servicePlan": "standard",
+      "installationDate": "2025-08-20",
+      "preferredPaymentDay": 15,
+      "isActive": true,
+      "assignedCollector": "collector-3",
+      "notes": "Cliente instalado día 20 - PRORRATEO 11 días",
+      "billingType": "prorated",
+      "proratedDays": 11
+    },
+    {
+      "id": "client-sim-009",
+      "fullName": "Jorge Luis Medina Castro",
+      "dni": "70123464",
+      "phone": "+51987654329",
+      "email": "jorge.medina@gmail.com",
+      "address": "Jr. Los Pinos 567, Pueblo Libre, Lima",
+      "neighborhood": "Pueblo Libre",
+      "servicePlan": "basic",
+      "installationDate": "2025-08-31",
+      "preferredPaymentDay": 20,
+      "isActive": true,
+      "assignedCollector": "collector-3",
+      "notes": "Cliente instalado día 31 - MES GRATIS",
+      "billingType": "free"
+    },
+    {
+      "id": "client-sim-010",
+      "fullName": "Patricia Isabel Herrera Díaz",
+      "dni": "70123465",
+      "phone": "+51987654330",
+      "email": "patricia.herrera@hotmail.com",
+      "address": "Av. La Marina 890, San Miguel, Lima",
+      "neighborhood": "San Miguel",
+      "servicePlan": "premium",
+      "installationDate": "2025-08-01",
+      "preferredPaymentDay": 1,
+      "isActive": true,
+      "assignedCollector": "collector-1",
+      "notes": "Cliente instalado día 1 - PRORRATEO 30 días",
+      "billingType": "prorated",
+      "proratedDays": 30
+    },
+    {
+      "id": "client-sim-011",
+      "fullName": "Roberto Carlos Jiménez Silva",
+      "dni": "70123466",
+      "phone": "+51987654331",
+      "email": "roberto.jimenez@gmail.com",
+      "address": "Jr. Las Orquídeas 123, Surco, Lima",
+      "neighborhood": "Surco",
+      "servicePlan": "standard",
+      "installationDate": "2025-08-25",
+      "preferredPaymentDay": 5,
+      "isActive": true,
+      "assignedCollector": "collector-1",
+      "notes": "Cliente instalado día 25 - PRORRATEO 6 días",
+      "billingType": "prorated",
+      "proratedDays": 6
+    },
+    {
+      "id": "client-sim-012",
+      "fullName": "Lucía Mercedes Gonzales Pérez",
+      "dni": "70123467",
+      "phone": "+51987654332",
+      "email": "lucia.gonzales@yahoo.com",
+      "address": "Av. Colonial 456, Callao, Lima",
+      "neighborhood": "Callao",
+      "servicePlan": "basic",
+      "installationDate": "2025-08-29",
+      "preferredPaymentDay": 10,
+      "isActive": true,
+      "assignedCollector": "collector-2",
+      "notes": "Cliente instalado día 29 - MES GRATIS",
+      "billingType": "free"
+    },
+    {
+      "id": "client-sim-013",
+      "fullName": "Fernando José Morales Quispe",
+      "dni": "70123468",
+      "phone": "+51987654333",
+      "email": "fernando.morales@gmail.com",
+      "address": "Jr. Los Jazmines 789, Los Olivos, Lima",
+      "neighborhood": "Los Olivos",
+      "servicePlan": "premium",
+      "installationDate": "2025-08-12",
+      "preferredPaymentDay": 15,
+      "isActive": false,
+      "assignedCollector": "collector-2",
+      "notes": "Cliente instalado día 12 - PRORRATEO 19 días - INACTIVO",
+      "billingType": "prorated",
+      "proratedDays": 19
+    },
+    {
+      "id": "client-sim-014",
+      "fullName": "Teresa del Carmen Álvarez Ruiz",
+      "dni": "70123469",
+      "phone": "+51987654334",
+      "email": "teresa.alvarez@hotmail.com",
+      "address": "Av. Angamos 1234, Surquillo, Lima",
+      "neighborhood": "Surquillo",
+      "servicePlan": "standard",
+      "installationDate": "2025-07-10",
+      "preferredPaymentDay": 20,
+      "isActive": true,
+      "assignedCollector": "collector-3",
+      "notes": "Cliente antiguo - pagos normales",
+      "billingType": "normal"
+    },
+    {
+      "id": "client-sim-015",
+      "fullName": "Diego Alejandro Navarro León",
+      "dni": "70123470",
+      "phone": "+51987654335",
+      "email": "diego.navarro@gmail.com",
+      "address": "Jr. Los Cedros 567, Magdalena, Lima",
+      "neighborhood": "Magdalena",
+      "servicePlan": "basic",
+      "installationDate": "2025-06-15",
+      "preferredPaymentDay": 25,
+      "isActive": true,
+      "assignedCollector": "collector-3",
+      "notes": "Cliente antiguo - pagos normales",
+      "billingType": "normal"
+    }
+  ],
+  "payments": [
+    {
+      "id": "payment-sim-001",
+      "clientId": "client-sim-001",
+      "amount": 0,
+      "billingType": "free",
+      "dueDate": "2025-08-05",
+      "status": "paid",
+      "paymentDate": "2025-08-27",
+      "paymentMethod": "free",
+      "collectorId": "collector-1",
+      "comments": "Mes gratis por instalación día 27",
+      "month": "2025-08"
+    },
+    {
+      "id": "payment-sim-002",
+      "clientId": "client-sim-002",
+      "amount": 64,
+      "billingType": "prorated",
+      "dueDate": "2025-08-10",
+      "status": "pending",
+      "paymentDate": null,
+      "paymentMethod": null,
+      "collectorId": null,
+      "comments": "Prorrateo: (120 ÷ 31 días) × 16 días = S/ 64",
+      "month": "2025-08"
+    },
+    {
+      "id": "payment-sim-003",
+      "clientId": "client-sim-004",
+      "amount": 108.39,
+      "billingType": "prorated",
+      "dueDate": "2025-08-20",
+      "status": "paid",
+      "paymentDate": "2025-08-20",
+      "paymentMethod": "cash",
+      "collectorId": "collector-2",
+      "comments": "Prorrateo: (160 ÷ 31 días) × 21 días = S/ 108.39",
+      "month": "2025-08"
+    },
+    {
+      "id": "payment-sim-004",
+      "clientId": "client-sim-006",
+      "amount": 67.10,
+      "billingType": "prorated",
+      "dueDate": "2025-08-05",
+      "status": "overdue",
+      "paymentDate": null,
+      "paymentMethod": null,
+      "collectorId": null,
+      "comments": "Prorrateo: (80 ÷ 31 días) × 26 días = S/ 67.10",
+      "month": "2025-08"
+    },
+    {
+      "id": "payment-sim-005",
+      "clientId": "client-sim-010",
+      "amount": 77.42,
+      "billingType": "prorated",
+      "dueDate": "2025-08-01",
+      "status": "paid",
+      "paymentDate": "2025-08-01",
+      "paymentMethod": "transfer",
+      "collectorId": "collector-1",
+      "comments": "Prorrateo: (80 ÷ 31 días) × 30 días = S/ 77.42",
+      "month": "2025-08"
+    },
+    {
+      "id": "payment-sim-006",
+      "clientId": "client-sim-014",
+      "amount": 120,
+      "billingType": "normal",
+      "dueDate": "2025-08-20",
+      "status": "pending",
+      "paymentDate": null,
+      "paymentMethod": null,
+      "collectorId": null,
+      "comments": null,
+      "month": "2025-08"
+    },
+    {
+      "id": "payment-sim-007",
+      "clientId": "client-sim-015",
+      "amount": 80,
+      "billingType": "normal",
+      "dueDate": "2025-08-25",
+      "status": "paid",
+      "paymentDate": "2025-08-24",
+      "paymentMethod": "cash",
+      "collectorId": "collector-3",
+      "comments": "Pago adelantado",
+      "month": "2025-08"
+    }
+  ],
+  "collectorAssignments": {
+    "collector-1": {
+      "id": "collector-1",
+      "name": "Carlos",
+      "alias": "Carlos",
+      "assignedClients": [
+        "client-sim-001",
+        "client-sim-002",
+        "client-sim-003",
+        "client-sim-010",
+        "client-sim-011"
+      ],
+      "zone": "San Isidro, La Molina, Surco",
+      "phone": "+51987111111"
+    },
+    "collector-2": {
+      "id": "collector-2",
+      "name": "Pedro González",
+      "alias": "Pepito",
+      "assignedClients": [
+        "client-sim-004",
+        "client-sim-005",
+        "client-sim-006",
+        "client-sim-012",
+        "client-sim-013"
+      ],
+      "zone": "San Miguel, Jesús María, Miraflores",
+      "phone": "+51987222222"
+    },
+    "collector-3": {
+      "id": "collector-3",
+      "name": "Juan Pérez",
+      "alias": "Juan",
+      "assignedClients": [
+        "client-sim-007",
+        "client-sim-008",
+        "client-sim-009",
+        "client-sim-014",
+        "client-sim-015"
+      ],
+      "zone": "San Borja, Lince, Pueblo Libre",
+      "phone": "+51987333333"
+    }
+  },
+  "summary": {
+    "totalClients": 15,
+    "activeClients": 14,
+    "inactiveClients": 1,
+    "clientsByPlan": {
+      "basic": 5,
+      "standard": 5,
+      "premium": 5
+    },
+    "clientsByBillingType": {
+      "free": 5,
+      "prorated": 8,
+      "normal": 2
+    },
+    "paymentsSummary": {
+      "total": 7,
+      "paid": 4,
+      "pending": 2,
+      "overdue": 1
+    },
+    "prorrationExamples": [
+      {
+        "day": 1,
+        "daysCharged": 30,
+        "formula": "(mensualidad ÷ 31) × 30"
+      },
+      {
+        "day": 5,
+        "daysCharged": 26,
+        "formula": "(mensualidad ÷ 31) × 26"
+      },
+      {
+        "day": 10,
+        "daysCharged": 21,
+        "formula": "(mensualidad ÷ 31) × 21"
+      },
+      {
+        "day": 15,
+        "daysCharged": 16,
+        "formula": "(mensualidad ÷ 31) × 16"
+      },
+      {
+        "day": 20,
+        "daysCharged": 11,
+        "formula": "(mensualidad ÷ 31) × 11"
+      },
+      {
+        "day": 25,
+        "daysCharged": 6,
+        "formula": "(mensualidad ÷ 31) × 6"
+      },
+      {
+        "day": 26,
+        "daysCharged": 0,
+        "formula": "MES GRATIS"
+      },
+      {
+        "day": 31,
+        "daysCharged": 0,
+        "formula": "MES GRATIS"
+      }
+    ]
+  }
+}
