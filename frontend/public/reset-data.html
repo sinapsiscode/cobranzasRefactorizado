@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Mock Data</title>
+</head>
+<body>
+    <h2>Regenerando datos mock...</h2>
+    <div id="status">Iniciando...</div>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        
+        function updateStatus(message) {
+            statusDiv.innerHTML += '<br>' + message;
+            console.log(message);
+        }
+        
+        // Limpiar localStorage
+        updateStatus('🧹 Limpiando localStorage...');
+        localStorage.clear();
+        updateStatus('✅ localStorage limpiado');
+        
+        // Forzar regeneración removiendo versión específica
+        updateStatus('🔄 Forzando regeneración de datos...');
+        localStorage.removeItem('tv-cable:seedVersion');
+        
+        updateStatus('📊 Datos preparados para regeneración');
+        updateStatus('🚀 Redirigiendo a la aplicación...');
+        
+        // Esperar un poco y redirigir
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 2000);
+    </script>
+</body>
+</html>
