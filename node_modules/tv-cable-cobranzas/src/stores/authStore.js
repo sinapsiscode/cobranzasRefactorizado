@@ -1,7 +1,7 @@
 // Store de autenticación - manejo de usuario actual, token, login/logout
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { mockServer } from '../services/mock/server.js';
+import apiService from '../services/apiService.js';
 
 export const useAuthStore = create(
   persist(
@@ -19,7 +19,7 @@ export const useAuthStore = create(
         set({ loading: true, error: null });
         
         try {
-          const response = await mockServer.login(credentials);
+          const response = await apiService.login(credentials);
           const { user, token, expiresIn } = response.data;
           
           const sessionExpiry = new Date(Date.now() + expiresIn);
@@ -53,7 +53,7 @@ export const useAuthStore = create(
         try {
           const { token } = get();
           if (token) {
-            await mockServer.logout(token);
+            await apiService.logout();
           }
         } catch (error) {
           // Ignorar errores de logout
@@ -86,7 +86,7 @@ export const useAuthStore = create(
         set({ loading: true });
         
         try {
-          const response = await mockServer.validateToken(token);
+          const response = await apiService.validateToken();
           const { user } = response.data;
           
           set({

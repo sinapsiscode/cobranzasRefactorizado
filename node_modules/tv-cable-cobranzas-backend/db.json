@@ -10,7 +10,7 @@
       "role": "admin",
       "phone": "+51987654321",
       "isActive": true,
-      "lastLogin": "2025-09-19T19:56:07.209Z",
+      "lastLogin": "2025-09-20T05:45:02.188Z",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z"
     },
@@ -47,6 +47,78 @@
       "commissionRate": 0.05,
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "user-supervisor-001",
+      "username": "supervisor1",
+      "password": "supervisor123",
+      "email": "supervisor@tvcable.com",
+      "firstName": "Ana",
+      "lastName": "Torres",
+      "role": "supervisor",
+      "phone": "+51987654324",
+      "isActive": true,
+      "lastLogin": null,
+      "assignedCollectors": [
+        "collector-1"
+      ],
+      "territories": [
+        "San Isidro",
+        "Surco"
+      ],
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "user-accountant-001",
+      "username": "accountant1",
+      "password": "accountant123",
+      "email": "contador@tvcable.com",
+      "firstName": "Luis",
+      "lastName": "Mendoza",
+      "role": "accountant",
+      "phone": "+51987654325",
+      "isActive": true,
+      "lastLogin": null,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "user-technician-001",
+      "username": "technician1",
+      "password": "tech123",
+      "email": "tecnico@tvcable.com",
+      "firstName": "Miguel",
+      "lastName": "Vargas",
+      "role": "technician",
+      "phone": "+51987654326",
+      "isActive": true,
+      "lastLogin": null,
+      "specialties": [
+        "installation",
+        "maintenance",
+        "repair"
+      ],
+      "assignedZones": [
+        "San Isidro",
+        "Miraflores"
+      ],
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "user-customer-service-001",
+      "username": "service1",
+      "password": "service123",
+      "email": "atencion@tvcable.com",
+      "firstName": "Carmen",
+      "lastName": "Silva",
+      "role": "customer_service",
+      "phone": "+51987654327",
+      "isActive": true,
+      "lastLogin": null,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
     }
   ],
   "clients": [
@@ -68,6 +140,16 @@
       "status": "active",
       "balance": 0,
       "lastPaymentDate": null,
+      "creditScore": 750,
+      "churnProbability": 0.15,
+      "lifetimeValue": 2400,
+      "preferredContactMethod": "whatsapp",
+      "equipmentList": [
+        "decoder-001"
+      ],
+      "suspensionHistory": [],
+      "complaintHistory": [],
+      "referralSource": "facebook_ad",
       "createdAt": "2025-08-27T00:00:00.000Z",
       "updatedAt": "2025-08-27T00:00:00.000Z"
     },
@@ -90,6 +172,16 @@
       "status": "active",
       "balance": 0,
       "lastPaymentDate": null,
+      "creditScore": 680,
+      "churnProbability": 0.25,
+      "lifetimeValue": 1800,
+      "preferredContactMethod": "phone",
+      "equipmentList": [
+        "decoder-002"
+      ],
+      "suspensionHistory": [],
+      "complaintHistory": [],
+      "referralSource": "referral",
       "createdAt": "2025-08-15T00:00:00.000Z",
       "updatedAt": "2025-08-15T00:00:00.000Z"
     }
@@ -172,11 +264,11 @@
       "workDate": "2025-09-19",
       "status": "pending",
       "requestedInitialCash": {
-        "efectivo": 400.00,
+        "efectivo": 400,
         "digital": {
-          "yape": 150.00,
-          "plin": 80.00,
-          "transferencia": 30.00,
+          "yape": 150,
+          "plin": 80,
+          "transferencia": 30,
           "otros": 0
         }
       },
@@ -192,11 +284,11 @@
       "workDate": "2025-09-19",
       "status": "pending",
       "requestedInitialCash": {
-        "efectivo": 300.00,
+        "efectivo": 300,
         "digital": {
-          "yape": 100.00,
-          "plin": 50.00,
-          "transferencia": 20.00,
+          "yape": 100,
+          "plin": 50,
+          "transferencia": 20,
           "otros": 0
         }
       },
@@ -212,11 +304,11 @@
       "workDate": "2025-09-19",
       "status": "approved",
       "requestedInitialCash": {
-        "efectivo": 500.00,
+        "efectivo": 500,
         "digital": {
-          "yape": 200.00,
-          "plin": 100.00,
-          "transferencia": 50.00,
+          "yape": 200,
+          "plin": 100,
+          "transferencia": 50,
           "otros": 0
         }
       },
@@ -230,6 +322,1260 @@
   "notifications": [],
   "clientExtended": [],
   "backups": [],
+  "equipment": [
+    {
+      "id": "decoder-001",
+      "type": "decoder",
+      "brand": "Samsung",
+      "model": "DTH-2025",
+      "serialNumber": "SAM001234567",
+      "status": "active",
+      "assignedClientId": "client-sim-001",
+      "installationDate": "2025-08-27",
+      "warrantyExpiration": "2026-08-27",
+      "createdAt": "2025-08-27T00:00:00.000Z",
+      "updatedAt": "2025-08-27T00:00:00.000Z"
+    },
+    {
+      "id": "decoder-002",
+      "type": "decoder",
+      "brand": "LG",
+      "model": "STB-HD",
+      "serialNumber": "LG987654321",
+      "status": "active",
+      "assignedClientId": "client-sim-002",
+      "installationDate": "2025-08-15",
+      "warrantyExpiration": "2026-08-15",
+      "createdAt": "2025-08-15T00:00:00.000Z",
+      "updatedAt": "2025-08-15T00:00:00.000Z"
+    }
+  ],
+  "workOrders": [
+    {
+      "id": "wo-001",
+      "type": "installation",
+      "clientId": "client-sim-001",
+      "technicianId": "user-technician-001",
+      "status": "completed",
+      "scheduledDate": "2025-08-27T09:00:00.000Z",
+      "completedDate": "2025-08-27T11:30:00.000Z",
+      "description": "Instalación de servicio premium",
+      "equipmentUsed": [
+        "decoder-001"
+      ],
+      "notes": "Instalación exitosa, cliente satisfecho",
+      "createdAt": "2025-08-26T00:00:00.000Z",
+      "updatedAt": "2025-08-27T11:30:00.000Z"
+    }
+  ],
+  "complaints": [
+    {
+      "id": "complaint-001",
+      "clientId": "client-sim-002",
+      "type": "technical",
+      "priority": "medium",
+      "status": "in_progress",
+      "subject": "Problemas de señal",
+      "description": "La señal se corta frecuentemente en algunos canales",
+      "assignedTo": "user-customer-service-001",
+      "createdAt": "2025-09-18T14:30:00.000Z",
+      "updatedAt": "2025-09-19T09:15:00.000Z"
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "campaign-001",
+      "name": "Promoción Septiembre",
+      "type": "discount",
+      "status": "active",
+      "startDate": "2025-09-01",
+      "endDate": "2025-09-30",
+      "description": "20% descuento en instalaciones nuevas",
+      "targetSegment": "new_clients",
+      "discountPercentage": 20,
+      "budget": 5000,
+      "currentSpent": 1200,
+      "createdAt": "2025-08-30T00:00:00.000Z",
+      "updatedAt": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "commissions": [
+    {
+      "id": "commission-2025-09-collector-1",
+      "collectorId": "collector-1",
+      "month": "2025-09",
+      "baseCommissionRate": 0.05,
+      "totalCollected": 0,
+      "commissionAmount": 0,
+      "bonuses": 0,
+      "status": "pending",
+      "createdAt": "2025-09-01T00:00:00.000Z",
+      "updatedAt": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "invoices": [],
+  "bankTransactions": [
+    {
+      "id": "bank-trans-001",
+      "bankAccountId": "bank-acc-001",
+      "type": "income",
+      "amount": 75,
+      "description": "Pago cliente Juan Mendoza",
+      "reference": "TRF123456",
+      "transactionDate": "2025-09-01T10:30:00.000Z",
+      "clientId": "client-sim-001",
+      "paymentId": "payment-001",
+      "reconciled": true,
+      "createdAt": "2025-09-01T10:35:00.000Z"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "log-001",
+      "userId": "user-admin-001",
+      "action": "login",
+      "resource": "auth",
+      "details": "Successful login",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+      "timestamp": "2025-09-19T19:56:07.209Z"
+    }
+  ],
+  "territories": [
+    {
+      "id": "territory-001",
+      "name": "Zona Centro",
+      "neighborhoods": [
+        "San Isidro",
+        "Miraflores"
+      ],
+      "supervisorId": "user-supervisor-001",
+      "collectors": [
+        "collector-1"
+      ],
+      "targetClientsPerMonth": 50,
+      "isActive": true
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo-001",
+      "name": "Mes Gratis Nuevos Clientes",
+      "type": "free_month",
+      "status": "active",
+      "applicableServices": [
+        "service-standard",
+        "service-premium"
+      ],
+      "conditions": "Solo para instalaciones nuevas",
+      "validUntil": "2025-12-31",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "roles": [
+    {
+      "name": "admin",
+      "description": "Administrador del sistema",
+      "permissions": [
+        "*"
+      ]
+    },
+    {
+      "name": "subadmin",
+      "description": "Sub-administrador",
+      "permissions": [
+        "view_dashboard",
+        "manage_clients",
+        "manage_payments",
+        "manage_collectors",
+        "view_reports"
+      ]
+    },
+    {
+      "name": "collector",
+      "description": "Cobrador de campo",
+      "permissions": [
+        "view_assigned_clients",
+        "register_payments",
+        "manage_cash_box",
+        "generate_vouchers"
+      ]
+    },
+    {
+      "name": "supervisor",
+      "description": "Supervisor de cobradores",
+      "permissions": [
+        "view_collector_performance",
+        "assign_routes",
+        "approve_exceptions",
+        "manage_territories"
+      ]
+    },
+    {
+      "name": "accountant",
+      "description": "Contador del sistema",
+      "permissions": [
+        "view_financial_reports",
+        "manage_invoices",
+        "bank_reconciliation",
+        "manage_commissions"
+      ]
+    },
+    {
+      "name": "technician",
+      "description": "Técnico de instalaciones",
+      "permissions": [
+        "manage_work_orders",
+        "equipment_inventory",
+        "service_activation",
+        "technical_support"
+      ]
+    },
+    {
+      "name": "customer_service",
+      "description": "Atención al cliente",
+      "permissions": [
+        "view_client_info",
+        "manage_complaints",
+        "schedule_visits",
+        "customer_support"
+      ]
+    }
+  ],
+  "electronicInvoices": [
+    {
+      "id": "inv-elect-001",
+      "clientId": "client-sim-001",
+      "invoiceNumber": "F001-00000001",
+      "series": "F001",
+      "correlative": "00000001",
+      "documentType": "01",
+      "issueDate": "2025-09-01T00:00:00.000Z",
+      "dueDate": "2025-09-05T00:00:00.000Z",
+      "currency": "PEN",
+      "subtotal": 63.56,
+      "igv": 11.44,
+      "total": 75,
+      "status": "issued",
+      "sunatStatus": "accepted",
+      "sunatTicket": "T123456789",
+      "qrCode": "https://sunat.gob.pe/qr/...",
+      "pdfUrl": "/invoices/F001-00000001.pdf",
+      "xmlUrl": "/invoices/F001-00000001.xml",
+      "items": [
+        {
+          "description": "Servicio Premium TV Cable + Internet",
+          "quantity": 1,
+          "unitPrice": 63.56,
+          "total": 63.56
+        }
+      ],
+      "createdAt": "2025-09-01T00:00:00.000Z",
+      "updatedAt": "2025-09-01T00:00:00.000Z"
+    }
+  ],
+  "taxDocuments": [
+    {
+      "id": "tax-doc-001",
+      "type": "credit_note",
+      "documentNumber": "FC01-00000001",
+      "originalInvoiceId": "inv-elect-001",
+      "reason": "Descuento por problema técnico",
+      "amount": 15,
+      "issueDate": "2025-09-05T00:00:00.000Z",
+      "status": "issued",
+      "sunatStatus": "accepted",
+      "createdAt": "2025-09-05T00:00:00.000Z"
+    }
+  ],
+  "sunatResponses": [
+    {
+      "id": "sunat-resp-001",
+      "documentId": "inv-elect-001",
+      "ticket": "T123456789",
+      "responseCode": "0",
+      "responseDescription": "La Factura numero F001-00000001, ha sido aceptada",
+      "cdrStatus": "accepted",
+      "observations": [],
+      "responseDate": "2025-09-01T00:15:00.000Z"
+    }
+  ],
+  "bankAccounts": [
+    {
+      "id": "bank-acc-001",
+      "bankName": "Banco de Crédito del Perú",
+      "accountNumber": "194-12345678-0-01",
+      "accountType": "corriente",
+      "currency": "PEN",
+      "currentBalance": 25000,
+      "isActive": true,
+      "allowsAutomaticDebit": true,
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "bank-acc-002",
+      "bankName": "Interbank",
+      "accountNumber": "898-30001234567",
+      "accountType": "ahorros",
+      "currency": "PEN",
+      "currentBalance": 15000,
+      "isActive": true,
+      "allowsAutomaticDebit": false,
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "automaticDebits": [
+    {
+      "id": "auto-debit-001",
+      "clientId": "client-sim-001",
+      "bankAccountId": "bank-acc-001",
+      "amount": 75,
+      "frequency": "monthly",
+      "dayOfMonth": 5,
+      "status": "active",
+      "lastExecutionDate": "2025-09-05T00:00:00.000Z",
+      "nextExecutionDate": "2025-10-05T00:00:00.000Z",
+      "failureCount": 0,
+      "createdAt": "2025-08-27T00:00:00.000Z"
+    }
+  ],
+  "bankReconciliation": [
+    {
+      "id": "reconciliation-001",
+      "bankAccountId": "bank-acc-001",
+      "period": "2025-09",
+      "startDate": "2025-09-01T00:00:00.000Z",
+      "endDate": "2025-09-30T23:59:59.000Z",
+      "bankBalance": 25000,
+      "systemBalance": 25000,
+      "difference": 0,
+      "status": "reconciled",
+      "reconciledBy": "user-accountant-001",
+      "reconciledAt": "2025-09-30T23:59:59.000Z"
+    }
+  ],
+  "delinquencyAnalysis": [
+    {
+      "id": "delinq-001",
+      "clientId": "client-sim-002",
+      "currentDebt": 135,
+      "daysPastDue": 15,
+      "riskLevel": "medium",
+      "paymentHistory": {
+        "totalPayments": 8,
+        "latePayments": 2,
+        "averageDaysLate": 7
+      },
+      "contactAttempts": 3,
+      "lastContactDate": "2025-09-18T00:00:00.000Z",
+      "nextActionDate": "2025-09-22T00:00:00.000Z",
+      "recommendedAction": "payment_plan",
+      "createdAt": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "paymentPlans": [
+    {
+      "id": "payment-plan-001",
+      "clientId": "client-sim-002",
+      "totalDebt": 135,
+      "numberOfInstallments": 3,
+      "installmentAmount": 45,
+      "startDate": "2025-09-25T00:00:00.000Z",
+      "status": "proposed",
+      "installments": [
+        {
+          "number": 1,
+          "amount": 45,
+          "dueDate": "2025-09-25T00:00:00.000Z",
+          "status": "pending"
+        },
+        {
+          "number": 2,
+          "amount": 45,
+          "dueDate": "2025-10-25T00:00:00.000Z",
+          "status": "pending"
+        },
+        {
+          "number": 3,
+          "amount": 45,
+          "dueDate": "2025-11-25T00:00:00.000Z",
+          "status": "pending"
+        }
+      ],
+      "createdAt": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "collectionStrategies": [
+    {
+      "id": "strategy-001",
+      "name": "Estrategia Morosidad Temprana",
+      "riskLevel": "low",
+      "daysPastDue": "1-15",
+      "actions": [
+        {
+          "day": 3,
+          "action": "sms_reminder",
+          "template": "sms_payment_reminder"
+        },
+        {
+          "day": 7,
+          "action": "phone_call",
+          "assignedTo": "customer_service"
+        },
+        {
+          "day": 15,
+          "action": "payment_plan_offer"
+        }
+      ],
+      "isActive": true
+    }
+  ],
+  "creditRiskAssessment": [
+    {
+      "id": "risk-001",
+      "clientId": "client-sim-001",
+      "score": 750,
+      "riskLevel": "low",
+      "factors": {
+        "paymentHistory": 90,
+        "serviceLength": 85,
+        "averagePaymentDelay": 95,
+        "complaintHistory": 80
+      },
+      "recommendedCreditLimit": 300,
+      "lastEvaluationDate": "2025-09-01T00:00:00.000Z",
+      "nextEvaluationDate": "2025-12-01T00:00:00.000Z"
+    }
+  ],
+  "callLogs": [
+    {
+      "id": "call-001",
+      "clientId": "client-sim-002",
+      "agentId": "user-customer-service-001",
+      "phoneNumber": "+51987654322",
+      "direction": "outbound",
+      "callType": "collection",
+      "startTime": "2025-09-18T14:30:00.000Z",
+      "endTime": "2025-09-18T14:45:00.000Z",
+      "duration": 900,
+      "status": "completed",
+      "outcome": "payment_promised",
+      "notes": "Cliente promete pagar mañana por la tarde",
+      "followUpRequired": true,
+      "followUpDate": "2025-09-20T00:00:00.000Z"
+    }
+  ],
+  "chatHistory": [
+    {
+      "id": "chat-001",
+      "clientId": "client-sim-001",
+      "agentId": "user-customer-service-001",
+      "channel": "whatsapp",
+      "startTime": "2025-09-19T10:00:00.000Z",
+      "endTime": "2025-09-19T10:15:00.000Z",
+      "status": "resolved",
+      "messages": [
+        {
+          "timestamp": "2025-09-19T10:00:00.000Z",
+          "sender": "client",
+          "message": "Hola, tengo problemas con mi servicio"
+        },
+        {
+          "timestamp": "2025-09-19T10:02:00.000Z",
+          "sender": "agent",
+          "message": "Hola Juan, ¿qué tipo de problema presentas?"
+        }
+      ],
+      "satisfaction": 4
+    }
+  ],
+  "emailCampaigns": [
+    {
+      "id": "email-campaign-001",
+      "name": "Recordatorio de Pago Septiembre",
+      "type": "payment_reminder",
+      "status": "sent",
+      "sendDate": "2025-09-01T08:00:00.000Z",
+      "targetSegment": "active_clients",
+      "totalRecipients": 150,
+      "sentCount": 150,
+      "deliveredCount": 148,
+      "openedCount": 89,
+      "clickedCount": 23,
+      "template": "payment_reminder_template",
+      "createdAt": "2025-08-30T00:00:00.000Z"
+    }
+  ],
+  "smsNotifications": [
+    {
+      "id": "sms-001",
+      "clientId": "client-sim-002",
+      "phoneNumber": "+51987654322",
+      "message": "Estimado cliente, le recordamos que su pago vence el 10 de septiembre. TV Cable",
+      "type": "payment_reminder",
+      "status": "delivered",
+      "sentAt": "2025-09-08T09:00:00.000Z",
+      "deliveredAt": "2025-09-08T09:01:30.000Z",
+      "cost": 0.1
+    }
+  ],
+  "networkNodes": [
+    {
+      "id": "node-001",
+      "name": "Nodo San Isidro Centro",
+      "type": "fiber",
+      "location": {
+        "address": "Av. Javier Prado 1234",
+        "latitude": -12.0931,
+        "longitude": -77.0465
+      },
+      "capacity": 500,
+      "currentLoad": 320,
+      "status": "operational",
+      "lastMaintenanceDate": "2025-09-01T00:00:00.000Z",
+      "nextMaintenanceDate": "2025-12-01T00:00:00.000Z",
+      "assignedTechnician": "user-technician-001"
+    }
+  ],
+  "signalQuality": [
+    {
+      "id": "signal-001",
+      "clientId": "client-sim-001",
+      "nodeId": "node-001",
+      "measurementDate": "2025-09-19T14:00:00.000Z",
+      "signalStrength": -15,
+      "noiseLevel": -45,
+      "quality": "excellent",
+      "downloadSpeed": 48.5,
+      "uploadSpeed": 12.3,
+      "packetLoss": 0.1,
+      "measuredBy": "automated_system"
+    }
+  ],
+  "outageReports": [
+    {
+      "id": "outage-001",
+      "nodeId": "node-001",
+      "startTime": "2025-09-15T02:30:00.000Z",
+      "endTime": "2025-09-15T04:15:00.000Z",
+      "duration": 105,
+      "affectedClients": 85,
+      "cause": "power_outage",
+      "description": "Corte de energía eléctrica en la zona",
+      "resolution": "Servicio restaurado automáticamente al retornar energía",
+      "reportedBy": "monitoring_system",
+      "severity": "medium"
+    }
+  ],
+  "maintenanceSchedule": [
+    {
+      "id": "maintenance-001",
+      "nodeId": "node-001",
+      "type": "preventive",
+      "scheduledDate": "2025-12-01T02:00:00.000Z",
+      "estimatedDuration": 240,
+      "assignedTechnician": "user-technician-001",
+      "description": "Mantenimiento preventivo trimestral",
+      "affectedServices": [
+        "internet",
+        "tv"
+      ],
+      "status": "scheduled",
+      "clientsNotified": false
+    }
+  ],
+  "technicianRoutes": [
+    {
+      "id": "route-001",
+      "technicianId": "user-technician-001",
+      "date": "2025-09-20T00:00:00.000Z",
+      "status": "planned",
+      "estimatedDistance": 45.2,
+      "estimatedDuration": 480,
+      "workOrders": [
+        "wo-002",
+        "wo-003"
+      ],
+      "startLocation": {
+        "address": "Oficina Central",
+        "latitude": -12.0464,
+        "longitude": -77.0428
+      },
+      "optimized": true
+    }
+  ],
+  "kpiMetrics": [
+    {
+      "id": "kpi-001",
+      "name": "Collection Rate",
+      "value": 87.5,
+      "target": 90,
+      "unit": "percentage",
+      "period": "2025-09",
+      "trend": "up",
+      "lastUpdated": "2025-09-19T00:00:00.000Z"
+    },
+    {
+      "id": "kpi-002",
+      "name": "Customer Satisfaction",
+      "value": 4.2,
+      "target": 4.5,
+      "unit": "rating",
+      "period": "2025-09",
+      "trend": "stable",
+      "lastUpdated": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "forecasting": [
+    {
+      "id": "forecast-001",
+      "type": "revenue",
+      "period": "2025-10",
+      "predictedValue": 125000,
+      "confidence": 85,
+      "basedOnData": "3_months_historical",
+      "factors": [
+        "seasonal_trends",
+        "new_subscriptions",
+        "churn_rate"
+      ],
+      "createdAt": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "churnAnalysis": [
+    {
+      "id": "churn-001",
+      "clientId": "client-sim-002",
+      "churnProbability": 0.75,
+      "riskFactors": [
+        "payment_delays",
+        "service_complaints",
+        "competitor_activity"
+      ],
+      "recommendedActions": [
+        "retention_call",
+        "service_upgrade_offer",
+        "payment_plan"
+      ],
+      "calculatedAt": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "revenueAnalytics": [
+    {
+      "id": "revenue-001",
+      "period": "2025-09",
+      "totalRevenue": 112500,
+      "recurringRevenue": 105000,
+      "oneTimeRevenue": 7500,
+      "averageRevenuePerUser": 75,
+      "growth": 5.2,
+      "breakdown": {
+        "basic_plan": 25000,
+        "standard_plan": 45000,
+        "premium_plan": 42500
+      }
+    }
+  ],
+  "customerSegmentation": [
+    {
+      "id": "segment-001",
+      "name": "High Value Customers",
+      "criteria": {
+        "minMonthlySpend": 60,
+        "serviceLength": "6_months",
+        "paymentPunctuality": "excellent"
+      },
+      "clientCount": 45,
+      "averageValue": 75,
+      "retentionRate": 95
+    }
+  ],
+  "executiveReports": [
+    {
+      "id": "exec-report-001",
+      "title": "Monthly Performance Report - September 2025",
+      "type": "monthly_summary",
+      "period": "2025-09",
+      "generatedBy": "user-admin-001",
+      "generatedAt": "2025-09-30T23:59:59.000Z",
+      "sections": [
+        {
+          "name": "Financial Performance",
+          "metrics": {
+            "totalRevenue": 112500,
+            "collectionRate": 87.5,
+            "arpu": 75
+          }
+        },
+        {
+          "name": "Customer Metrics",
+          "metrics": {
+            "newCustomers": 12,
+            "churnedCustomers": 3,
+            "satisfactionScore": 4.2
+          }
+        }
+      ]
+    }
+  ],
+  "performanceMetrics": [
+    {
+      "id": "perf-001",
+      "userId": "collector-1",
+      "period": "2025-09",
+      "metricsType": "collector",
+      "kpis": {
+        "totalCollections": 15000,
+        "collectionsTarget": 18000,
+        "clientsVisited": 45,
+        "successfulCollections": 38,
+        "conversionRate": 84.4
+      },
+      "ranking": 2,
+      "performance": "good"
+    }
+  ],
+  "collectorKpis": [
+    {
+      "id": "collector-kpi-001",
+      "collectorId": "collector-1",
+      "month": "2025-09",
+      "collections": {
+        "target": 18000,
+        "achieved": 15000,
+        "percentage": 83.3
+      },
+      "clientVisits": {
+        "planned": 50,
+        "completed": 45,
+        "percentage": 90
+      },
+      "efficiency": {
+        "averageTimePerVisit": 25,
+        "successRate": 84.4
+      }
+    }
+  ],
+  "financialSummaries": [
+    {
+      "id": "fin-summary-001",
+      "period": "2025-09",
+      "totalIncome": 112500,
+      "totalExpenses": 45000,
+      "netProfit": 67500,
+      "profitMargin": 60,
+      "breakdown": {
+        "serviceRevenue": 105000,
+        "installationFees": 7500,
+        "operationalCosts": 35000,
+        "commissions": 10000
+      }
+    }
+  ],
+  "leads": [
+    {
+      "id": "lead-001",
+      "source": "facebook_ad",
+      "firstName": "Roberto",
+      "lastName": "Silva",
+      "phone": "+51987654328",
+      "email": "roberto.silva@gmail.com",
+      "address": "Av. Los Eucaliptos 789, Surco",
+      "interestedService": "standard",
+      "status": "contacted",
+      "assignedTo": "user-customer-service-001",
+      "leadScore": 75,
+      "createdAt": "2025-09-18T00:00:00.000Z"
+    }
+  ],
+  "prospects": [
+    {
+      "id": "prospect-001",
+      "leadId": "lead-001",
+      "conversionProbability": 0.65,
+      "lastContactDate": "2025-09-19T10:00:00.000Z",
+      "nextFollowUp": "2025-09-22T14:00:00.000Z",
+      "notes": "Interesado en plan estándar, solicita descuento",
+      "stage": "negotiation"
+    }
+  ],
+  "salesFunnel": [
+    {
+      "id": "funnel-001",
+      "stage": "lead",
+      "count": 25,
+      "conversionRate": 60,
+      "averageTimeInStage": 3
+    },
+    {
+      "id": "funnel-002",
+      "stage": "prospect",
+      "count": 15,
+      "conversionRate": 70,
+      "averageTimeInStage": 7
+    },
+    {
+      "id": "funnel-003",
+      "stage": "customer",
+      "count": 10,
+      "conversionRate": 100,
+      "averageTimeInStage": 0
+    }
+  ],
+  "conversionTracking": [
+    {
+      "id": "conversion-001",
+      "leadId": "lead-001",
+      "stages": [
+        {
+          "stage": "lead",
+          "entryDate": "2025-09-18T00:00:00.000Z",
+          "exitDate": "2025-09-19T00:00:00.000Z"
+        },
+        {
+          "stage": "prospect",
+          "entryDate": "2025-09-19T00:00:00.000Z",
+          "exitDate": null
+        }
+      ],
+      "currentStage": "prospect",
+      "totalDuration": 1
+    }
+  ],
+  "referralProgram": [
+    {
+      "id": "referral-001",
+      "referrerId": "client-sim-001",
+      "referredClientId": "client-sim-002",
+      "referralDate": "2025-08-15T00:00:00.000Z",
+      "status": "completed",
+      "reward": 25,
+      "rewardStatus": "paid",
+      "rewardDate": "2025-09-15T00:00:00.000Z"
+    }
+  ],
+  "branches": [
+    {
+      "id": "branch-001",
+      "name": "Sucursal Centro",
+      "address": "Av. Arequipa 1234, Lima",
+      "phone": "+5114567890",
+      "managerId": "user-subadmin-001",
+      "isActive": true,
+      "operatingHours": {
+        "monday": "09:00-18:00",
+        "tuesday": "09:00-18:00",
+        "wednesday": "09:00-18:00",
+        "thursday": "09:00-18:00",
+        "friday": "09:00-18:00",
+        "saturday": "09:00-14:00",
+        "sunday": "closed"
+      },
+      "services": [
+        "customer_service",
+        "payments",
+        "technical_support"
+      ]
+    }
+  ],
+  "branchPerformance": [
+    {
+      "id": "branch-perf-001",
+      "branchId": "branch-001",
+      "period": "2025-09",
+      "customersServed": 450,
+      "averageWaitTime": 15,
+      "satisfactionScore": 4.1,
+      "revenue": 112500,
+      "newSignups": 12
+    }
+  ],
+  "inventory": [
+    {
+      "id": "inventory-001",
+      "branchId": "branch-001",
+      "itemType": "decoder",
+      "brand": "Samsung",
+      "model": "DTH-2025",
+      "currentStock": 25,
+      "minimumStock": 10,
+      "maximumStock": 50,
+      "lastRestockDate": "2025-09-01T00:00:00.000Z",
+      "unitCost": 120
+    }
+  ],
+  "staffScheduling": [
+    {
+      "id": "schedule-001",
+      "branchId": "branch-001",
+      "userId": "user-customer-service-001",
+      "date": "2025-09-20T00:00:00.000Z",
+      "shift": "morning",
+      "startTime": "09:00",
+      "endTime": "13:00",
+      "role": "customer_service",
+      "status": "confirmed"
+    }
+  ],
+  "automationRules": [
+    {
+      "id": "rule-001",
+      "name": "Payment Reminder Automation",
+      "trigger": "payment_due_in_3_days",
+      "conditions": [
+        {
+          "field": "paymentStatus",
+          "operator": "equals",
+          "value": "pending"
+        }
+      ],
+      "actions": [
+        {
+          "type": "send_sms",
+          "template": "payment_reminder",
+          "delay": 0
+        },
+        {
+          "type": "create_task",
+          "assignTo": "collector",
+          "delay": 24
+        }
+      ],
+      "isActive": true
+    }
+  ],
+  "workflows": [
+    {
+      "id": "workflow-001",
+      "name": "New Customer Onboarding",
+      "steps": [
+        {
+          "step": 1,
+          "name": "Welcome Email",
+          "type": "email",
+          "template": "welcome_email"
+        },
+        {
+          "step": 2,
+          "name": "Installation Scheduling",
+          "type": "task",
+          "assignTo": "technician"
+        },
+        {
+          "step": 3,
+          "name": "First Payment Setup",
+          "type": "notification",
+          "delay": 7
+        }
+      ],
+      "isActive": true
+    }
+  ],
+  "triggers": [
+    {
+      "id": "trigger-001",
+      "name": "Late Payment Trigger",
+      "event": "payment_overdue",
+      "condition": "days_overdue > 5",
+      "workflowId": "workflow-002",
+      "isActive": true
+    }
+  ],
+  "scheduledTasks": [
+    {
+      "id": "task-001",
+      "name": "Monthly Debt Generation",
+      "type": "system",
+      "schedule": "0 0 1 * *",
+      "lastRun": "2025-09-01T00:00:00.000Z",
+      "nextRun": "2025-10-01T00:00:00.000Z",
+      "status": "active"
+    }
+  ],
+  "apiIntegrations": [
+    {
+      "id": "integration-001",
+      "name": "SUNAT API",
+      "type": "electronic_invoicing",
+      "endpoint": "https://api.sunat.gob.pe",
+      "status": "active",
+      "lastSync": "2025-09-19T00:00:00.000Z",
+      "configuration": {
+        "ruc": "20123456789",
+        "username": "MODDATOS",
+        "environment": "production"
+      }
+    }
+  ],
+  "webhooks": [
+    {
+      "id": "webhook-001",
+      "name": "Payment Notification",
+      "url": "https://api.external-service.com/payments",
+      "events": [
+        "payment.created",
+        "payment.updated"
+      ],
+      "isActive": true,
+      "secret": "wh_secret_key",
+      "lastTriggered": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "externalServices": [
+    {
+      "id": "service-001",
+      "name": "SMS Provider",
+      "type": "sms",
+      "provider": "Twilio",
+      "status": "active",
+      "configuration": {
+        "accountSid": "AC123456789",
+        "fromNumber": "+51900000000"
+      },
+      "monthlyUsage": 150,
+      "monthlyLimit": 1000
+    }
+  ],
+  "thirdPartyConnections": [
+    {
+      "id": "connection-001",
+      "service": "WhatsApp Business API",
+      "status": "connected",
+      "lastSync": "2025-09-19T00:00:00.000Z",
+      "permissions": [
+        "send_messages",
+        "receive_messages"
+      ],
+      "rateLimits": {
+        "messagesPerSecond": 10,
+        "dailyLimit": 1000
+      }
+    }
+  ],
+  "securityLogs": [
+    {
+      "id": "sec-log-001",
+      "eventType": "login_attempt",
+      "userId": "user-admin-001",
+      "ipAddress": "192.168.1.100",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+      "success": true,
+      "timestamp": "2025-09-19T19:56:07.209Z",
+      "riskLevel": "low"
+    }
+  ],
+  "userSessions": [
+    {
+      "id": "session-001",
+      "userId": "user-admin-001",
+      "token": "jwt_token_hash",
+      "ipAddress": "192.168.1.100",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+      "startTime": "2025-09-19T19:56:07.209Z",
+      "lastActivity": "2025-09-19T20:30:00.000Z",
+      "status": "active"
+    }
+  ],
+  "passwordPolicies": [
+    {
+      "id": "policy-001",
+      "name": "Default Password Policy",
+      "minLength": 8,
+      "requireUppercase": true,
+      "requireLowercase": true,
+      "requireNumbers": true,
+      "requireSpecialChars": false,
+      "maxAge": 90,
+      "preventReuse": 5,
+      "isActive": true
+    }
+  ],
+  "accessControl": [
+    {
+      "id": "access-001",
+      "userId": "collector-1",
+      "resource": "clients",
+      "permissions": [
+        "read"
+      ],
+      "restrictions": {
+        "territoryBased": true,
+        "allowedTerritories": [
+          "territory-001"
+        ]
+      },
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "dataProtection": [
+    {
+      "id": "data-prot-001",
+      "clientId": "client-sim-001",
+      "consentType": "data_processing",
+      "consentGiven": true,
+      "consentDate": "2025-08-27T00:00:00.000Z",
+      "purpose": "service_provision",
+      "retentionPeriod": "7_years",
+      "canWithdraw": true
+    }
+  ],
+  "regulatoryReports": [
+    {
+      "id": "reg-report-001",
+      "type": "monthly_tax_report",
+      "period": "2025-09",
+      "status": "submitted",
+      "submissionDate": "2025-10-15T00:00:00.000Z",
+      "authority": "SUNAT",
+      "reference": "REP-2025-09-001"
+    }
+  ],
+  "auditTrails": [
+    {
+      "id": "audit-001",
+      "userId": "user-admin-001",
+      "action": "client_update",
+      "resourceType": "client",
+      "resourceId": "client-sim-001",
+      "changes": {
+        "field": "phone",
+        "oldValue": "+51987654320",
+        "newValue": "+51987654321"
+      },
+      "timestamp": "2025-09-19T00:00:00.000Z"
+    }
+  ],
+  "complianceChecks": [
+    {
+      "id": "compliance-001",
+      "type": "data_retention",
+      "status": "passed",
+      "lastCheck": "2025-09-19T00:00:00.000Z",
+      "nextCheck": "2025-10-19T00:00:00.000Z",
+      "issues": [],
+      "recommendations": []
+    }
+  ],
+  "customerPortal": [
+    {
+      "id": "portal-001",
+      "clientId": "client-sim-001",
+      "username": "juan.mendoza",
+      "passwordHash": "hashed_password",
+      "isActive": true,
+      "lastLogin": "2025-09-18T00:00:00.000Z",
+      "features": [
+        "view_bills",
+        "make_payments",
+        "view_usage",
+        "submit_tickets"
+      ],
+      "preferredLanguage": "es",
+      "createdAt": "2025-08-27T00:00:00.000Z"
+    }
+  ],
+  "selfServiceActions": [
+    {
+      "id": "self-action-001",
+      "clientId": "client-sim-001",
+      "actionType": "payment",
+      "amount": 75,
+      "paymentMethod": "credit_card",
+      "status": "completed",
+      "timestamp": "2025-09-15T14:30:00.000Z",
+      "reference": "SELF-PAY-001"
+    }
+  ],
+  "onlinePayments": [
+    {
+      "id": "online-pay-001",
+      "clientId": "client-sim-001",
+      "amount": 75,
+      "paymentMethod": "visa",
+      "cardLast4": "1234",
+      "transactionId": "txn_123456789",
+      "status": "approved",
+      "gatewayResponse": "approved",
+      "timestamp": "2025-09-15T14:30:00.000Z"
+    }
+  ],
+  "serviceRequests": [
+    {
+      "id": "service-req-001",
+      "clientId": "client-sim-001",
+      "type": "technical_support",
+      "subject": "Problema con canales premium",
+      "description": "No puedo acceder a los canales premium desde ayer",
+      "priority": "medium",
+      "status": "in_progress",
+      "assignedTo": "user-technician-001",
+      "createdAt": "2025-09-19T10:00:00.000Z"
+    }
+  ],
+  "ticketSystem": [
+    {
+      "id": "ticket-001",
+      "number": "TK-2025-001",
+      "clientId": "client-sim-001",
+      "category": "technical",
+      "subject": "Internet connection issues",
+      "description": "Internet connection dropping frequently",
+      "priority": "high",
+      "status": "open",
+      "assignedTo": "user-technician-001",
+      "createdBy": "user-customer-service-001",
+      "createdAt": "2025-09-19T09:00:00.000Z",
+      "updates": [
+        {
+          "timestamp": "2025-09-19T09:00:00.000Z",
+          "userId": "user-customer-service-001",
+          "message": "Ticket created from customer call"
+        }
+      ]
+    }
+  ],
+  "knowledgeBase": [
+    {
+      "id": "kb-001",
+      "title": "How to troubleshoot internet connection",
+      "category": "technical_support",
+      "content": "Step-by-step guide to troubleshoot internet connection issues...",
+      "tags": [
+        "internet",
+        "troubleshooting",
+        "connection"
+      ],
+      "viewCount": 45,
+      "helpful": 38,
+      "notHelpful": 7,
+      "lastUpdated": "2025-09-01T00:00:00.000Z"
+    }
+  ],
+  "faqManagement": [
+    {
+      "id": "faq-001",
+      "question": "¿Cómo puedo cambiar mi plan de servicio?",
+      "answer": "Puede cambiar su plan contactando a nuestro servicio al cliente o a través del portal web...",
+      "category": "billing",
+      "language": "es",
+      "isActive": true,
+      "viewCount": 120,
+      "lastUpdated": "2025-09-01T00:00:00.000Z"
+    }
+  ],
+  "escalationMatrix": [
+    {
+      "id": "escalation-001",
+      "ticketType": "technical",
+      "priority": "high",
+      "level1": "user-technician-001",
+      "level2": "user-supervisor-001",
+      "level3": "user-admin-001",
+      "timeToEscalate": 4,
+      "isActive": true
+    }
+  ],
   "neighborhoods": [
     {
       "id": "neighborhood-001",
