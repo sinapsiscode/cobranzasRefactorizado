@@ -1,0 +1,204 @@
+[
+  {
+    "id": "caja-general-2024-01-16-collector-001",
+    "collectorId": "collector-001",
+    "serviceType": "general",
+    "date": "2024-01-16",
+    "status": "abierta",
+    "cajaInicial": {
+      "efectivo": 500.00,
+      "digital": {
+        "yape": 200.00,
+        "plin": 100.00,
+        "transferencia": 50.00,
+        "otros": 0
+      }
+    },
+    "ingresos": [
+      {
+        "id": "income-001",
+        "paymentId": "payment-001",
+        "clientName": "Juan Pérez",
+        "clientId": "client-001",
+        "amount": 80.00,
+        "method": "efectivo",
+        "serviceType": "internet",
+        "time": "2024-01-16T09:00:00.000Z",
+        "concept": "Pago mensualidad Internet"
+      },
+      {
+        "id": "income-002",
+        "paymentId": "payment-002",
+        "clientName": "María García",
+        "clientId": "client-002",
+        "amount": 65.00,
+        "method": "yape",
+        "serviceType": "cable",
+        "time": "2024-01-16T09:30:00.000Z",
+        "concept": "Pago mensualidad Cable"
+      },
+      {
+        "id": "income-003",
+        "paymentId": "payment-003",
+        "clientName": "Carlos López",
+        "clientId": "client-003",
+        "amount": 120.00,
+        "method": "efectivo",
+        "serviceType": "duo",
+        "time": "2024-01-16T10:00:00.000Z",
+        "concept": "Pago mensualidad DUO"
+      },
+      {
+        "id": "income-004-internet",
+        "paymentId": "payment-004-internet",
+        "clientName": "Ana Rodríguez",
+        "clientId": "client-004",
+        "amount": 70.00,
+        "method": "transferencia",
+        "serviceType": "internet",
+        "time": "2024-01-16T10:30:00.000Z",
+        "concept": "Pago DUO - Porción Internet"
+      },
+      {
+        "id": "income-004-cable",
+        "paymentId": "payment-004-cable",
+        "clientName": "Ana Rodríguez",
+        "clientId": "client-004",
+        "amount": 50.00,
+        "method": "transferencia",
+        "serviceType": "cable",
+        "time": "2024-01-16T10:30:00.000Z",
+        "concept": "Pago DUO - Porción Cable"
+      }
+    ],
+    "gastos": [
+      {
+        "id": "expense-001",
+        "concept": "Combustible",
+        "amount": 20.00,
+        "serviceType": "general",
+        "time": "2024-01-16T08:30:00.000Z",
+        "description": "Gasolina para moto - recorrido del día"
+      },
+      {
+        "id": "expense-002",
+        "concept": "Cable UTP",
+        "amount": 45.00,
+        "serviceType": "internet",
+        "time": "2024-01-16T11:00:00.000Z",
+        "description": "100 metros de cable Cat 5e para instalación"
+      },
+      {
+        "id": "expense-003",
+        "concept": "Conectores RJ45",
+        "amount": 15.00,
+        "serviceType": "internet",
+        "time": "2024-01-16T11:15:00.000Z",
+        "description": "Bolsa de 50 conectores RJ45"
+      },
+      {
+        "id": "expense-004",
+        "concept": "Cable Coaxial",
+        "amount": 30.00,
+        "serviceType": "cable",
+        "time": "2024-01-16T14:00:00.000Z",
+        "description": "50 metros cable RG6 para extensión"
+      },
+      {
+        "id": "expense-005",
+        "concept": "Splitter",
+        "amount": 25.00,
+        "serviceType": "cable",
+        "time": "2024-01-16T14:30:00.000Z",
+        "description": "Splitter 1x4 para dividir señal"
+      },
+      {
+        "id": "expense-006",
+        "concept": "Alimentación",
+        "amount": 12.00,
+        "serviceType": "general",
+        "time": "2024-01-16T13:00:00.000Z",
+        "description": "Almuerzo del día"
+      }
+    ],
+    "fechaApertura": "2024-01-16T08:00:00.000Z"
+  },
+  {
+    "id": "caja-general-2024-01-16-collector-002",
+    "collectorId": "collector-002",
+    "serviceType": "general",
+    "date": "2024-01-16",
+    "status": "abierta",
+    "cajaInicial": {
+      "efectivo": 300.00,
+      "digital": {
+        "yape": 150.00,
+        "plin": 80.00,
+        "transferencia": 20.00,
+        "otros": 0
+      }
+    },
+    "ingresos": [
+      {
+        "id": "income-201",
+        "paymentId": "payment-201",
+        "clientName": "Roberto Silva",
+        "clientId": "client-201",
+        "amount": 80.00,
+        "method": "efectivo",
+        "serviceType": "internet",
+        "time": "2024-01-16T09:15:00.000Z",
+        "concept": "Pago mensualidad Internet"
+      },
+      {
+        "id": "income-202",
+        "paymentId": "payment-202",
+        "clientName": "Carmen Torres",
+        "clientId": "client-202",
+        "amount": 80.00,
+        "method": "yape",
+        "serviceType": "internet",
+        "time": "2024-01-16T10:45:00.000Z",
+        "concept": "Pago mensualidad Internet"
+      },
+      {
+        "id": "income-203",
+        "paymentId": "payment-203",
+        "clientName": "Luis Mendoza",
+        "clientId": "client-203",
+        "amount": 80.00,
+        "method": "plin",
+        "serviceType": "internet",
+        "time": "2024-01-16T11:30:00.000Z",
+        "concept": "Pago mensualidad Internet"
+      }
+    ],
+    "gastos": [
+      {
+        "id": "expense-201",
+        "concept": "Pasajes",
+        "amount": 15.00,
+        "serviceType": "general",
+        "time": "2024-01-16T08:00:00.000Z",
+        "description": "Transporte público para llegar a zona"
+      },
+      {
+        "id": "expense-202",
+        "concept": "Router",
+        "amount": 120.00,
+        "serviceType": "internet",
+        "time": "2024-01-16T12:00:00.000Z",
+        "description": "Router TP-Link para nuevo cliente"
+      },
+      {
+        "id": "expense-203",
+        "concept": "Antena",
+        "amount": 85.00,
+        "serviceType": "internet",
+        "time": "2024-01-16T14:00:00.000Z",
+        "description": "Antena WiFi exterior para mejorar señal"
+      }
+    ],
+    "fechaApertura": "2024-01-16T08:30:00.000Z"
+  }
+]
