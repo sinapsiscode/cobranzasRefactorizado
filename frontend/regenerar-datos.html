@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regenerar Datos de Prueba</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .success {
+            background: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            margin: 20px 0;
+            display: none;
+        }
+        .info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e5e7eb;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .warning {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Regenerar Datos de Prueba</h1>
+        <p class="subtitle">Sistema de Gestión TV Cable - Datos con Deudas Pendientes</p>
+
+        <div class="info">
+            <strong>ℹ️ Información:</strong><br>
+            Este script regenerará todos los datos del sistema con clientes que tienen deudas pendientes.
+            Los datos actuales se perderán.
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">200</div>
+                <div class="stat-label">Clientes totales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Con deudas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Meses de historial</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Tipos de pago</div>
+            </div>
+        </div>
+
+        <button onclick="regenerarDatos()">🔄 Regenerar Todos los Datos</button>
+        <button onclick="limpiarYRecargar()">🗑️ Limpiar y Recargar</button>
+        <button onclick="abrirApp()">🚀 Ir a la Aplicación</button>
+
+        <div id="success" class="success">
+            ✅ <strong>¡Datos regenerados exitosamente!</strong><br>
+            Redirigiendo a la aplicación...
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Nota:</strong> Los datos generados incluyen:
+            <ul>
+                <li>Clientes con múltiples deudas vencidas</li>
+                <li>Pagos pendientes, parciales y cobrados</li>
+                <li>Historial de los últimos 12 meses</li>
+                <li>El primer cliente (client-1) tiene 5 meses pendientes garantizados</li>
+            </ul>
+        </div>
+
+        <div class="info">
+            <strong>📊 Para exportar la matriz mensual:</strong><br>
+            1. Inicia sesión como <code>admin</code> / <code>admin123</code><br>
+            2. Ve a <strong>Administrador → Deudas Mensuales</strong><br>
+            3. Cambia a vista <strong>"Matriz Mensual"</strong><br>
+            4. Haz clic en <strong>"Exportar a Excel"</strong>
+        </div>
+    </div>
+
+    <script>
+        function regenerarDatos() {
+            console.log('🔄 Regenerando datos...');
+
+            // Limpiar versión del seed para forzar regeneración
+            localStorage.removeItem('tv-cable:seedVersion');
+
+            // Mostrar mensaje de éxito
+            document.getElementById('success').style.display = 'block';
+
+            // Redirigir después de 2 segundos
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        }
+
+        function limpiarYRecargar() {
+            if (confirm('¿Estás seguro? Esto eliminará TODOS los datos actuales.')) {
+                console.log('🗑️ Limpiando datos...');
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // Mostrar mensaje de éxito
+                document.getElementById('success').style.display = 'block';
+
+                // Redirigir después de 2 segundos
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            }
+        }
+
+        function abrirApp() {
+            window.location.href = '/';
+        }
+
+        // Verificar si hay datos actuales
+        window.addEventListener('load', () => {
+            const hasData = localStorage.getItem('tv-cable:seedVersion');
+            if (!hasData) {
+                console.log('ℹ️ No se detectaron datos. Se generarán automáticamente al abrir la app.');
+            } else {
+                console.log('✅ Datos actuales detectados:', hasData);
+            }
+        });
+    </script>
+</body>
+</html>

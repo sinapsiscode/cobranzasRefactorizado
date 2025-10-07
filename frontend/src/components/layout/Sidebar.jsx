@@ -9,7 +9,6 @@ import {
   Users,
   CreditCard,
   FileText,
-  Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -61,7 +60,6 @@ const Sidebar = ({ isMobile = false }) => {
           { name: 'Pagos', href: '/subadmin/payments', icon: CreditCard },
           { name: 'Gestión de Cajas', href: '/subadmin/cashboxes', icon: Wallet },
           { name: 'Reportes', href: '/subadmin/reports', icon: FileText },
-          { name: 'Configuración', href: '/subadmin/settings', icon: Settings },
         ];
       case 'admin':
         return [
@@ -77,7 +75,6 @@ const Sidebar = ({ isMobile = false }) => {
           { name: 'Métodos de Pago', href: '/admin/payment-methods', icon: Smartphone },
           { name: 'Backups', href: '/admin/backups', icon: Shield },
           { name: 'Reportes', href: '/admin/reports', icon: FileText },
-          { name: 'Configuración', href: '/admin/settings', icon: Settings },
         ];
       case 'collector':
         return [

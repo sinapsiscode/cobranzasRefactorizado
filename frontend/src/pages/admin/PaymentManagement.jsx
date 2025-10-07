@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import PaymentRegistrationModal from '../../components/common/PaymentRegistrationModal';
 import { generatePaymentReceipt } from '../../services/reports/pdfGenerator';
 import { db } from '../../services/mock/db';
 
@@ -75,6 +76,9 @@ const PaymentManagement = () => {
   // Estados para validación de pagos
   const [selectedPaymentForValidation, setSelectedPaymentForValidation] = useState(null);
   const [showValidationModal, setShowValidationModal] = useState(false);
+
+  // Estado para modal de registro de pagos
+  const [showPaymentRegistrationModal, setShowPaymentRegistrationModal] = useState(false);
   
   useEffect(() => {
     fetchPayments();
@@ -172,6 +176,17 @@ const PaymentManagement = () => {
   };
 
   const getBillingTypeBadge = (payment) => {
+    // Prioridad 1: Pago adelantado
+    if (payment.isAdvancePayment) {
+      return (
+        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+          <TrendingUp className="h-3 w-3 mr-1" />
+          Adelantado
+        </span>
+      );
+    }
+
+    // Prioridad 2: Tipo de facturación especial
     if (payment.billingType === 'free') {
       return (
         <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
@@ -187,6 +202,8 @@ const PaymentManagement = () => {
         </span>
       );
     }
+
+    // Prioridad 3: Normal
     return (
       <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
         Normal
@@ -921,7 +938,10 @@ const PaymentManagement = () => {
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </button>
-          <button className="flex items-center px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-blue-600">
+          <button
+            onClick={() => setShowPaymentRegistrationModal(true)}
+            className="flex items-center px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-blue-600"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Registrar Pago
           </button>
@@ -1418,6 +1438,15 @@ const PaymentManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de Registro de Pagos */}
+      <PaymentRegistrationModal
+        isOpen={showPaymentRegistrationModal}
+        onClose={() => {
+          setShowPaymentRegistrationModal(false);
+          fetchPayments(); // Recargar pagos después de cerrar el modal
+        }}
+      />
     </div>
   );
 };

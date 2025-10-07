@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useClientStore } from '../../stores/clientStore';
 import { useClientExtendedStore } from '../../stores/clientExtendedStore';
 import { useMonthlyDebtStore } from '../../stores/monthlyDebtStore';
+import { usePaymentStore } from '../../stores/paymentStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { useAuthStore } from '../../stores/authStore';
-import { Users, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, ChevronLeft, ChevronRight, Calendar, Clock, Pause, XCircle, AlertTriangle, CheckCircle, History, Import, DollarSign, FileText, MessageCircle, MoreVertical, RefreshCw, MapPin, Settings } from 'lucide-react';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { Users, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, ChevronLeft, ChevronRight, Calendar, Clock, Pause, XCircle, AlertTriangle, CheckCircle, History, Import, DollarSign, FileText, MessageCircle, MoreVertical, RefreshCw, MapPin, Settings, Bell, Mail } from 'lucide-react';
 import { calculateServicePrice, getPriceMatrix, getServiceInfo, formatPrice } from '../../services/basePricingService';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -15,6 +17,7 @@ import ClientExtendedDetails from '../../components/common/ClientExtendedDetails
 import { getStatusLabel, getStatusColor, getServiceTypeLabel, getServiceTypeColor } from '../../services/mock/schemas/client';
 import { getTarifaLabel, getTarifaColor } from '../../services/mock/schemas/clientExtended';
 import { exportClientsToExcel } from '../../utils/excelExport';
+import { sendBulkPaymentReminders } from '../../services/emailService';
 
 // Verificar que las funciones estén disponibles
 console.log('🔍 Funciones de estado importadas:', { getStatusLabel, getStatusColor });
@@ -55,6 +58,7 @@ const ClientManagement = () => {
   
   const { getExtendedData, getClientEffectiveCost, loadFromLocalStorage } = useClientExtendedStore();
   const { getClientSummary } = useMonthlyDebtStore();
+  const { payments } = usePaymentStore();
   const { success, error: showError } = useNotificationStore();
   const { isAdminOrSubAdmin } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
@@ -644,12 +648,70 @@ const ClientManagement = () => {
     }
   };
 
+  // Enviar recordatorios por email a todos los clientes con deuda
+  const handleSendReminders = async () => {
+    try {
+      const { isEmailConfigValid } = useSettingsStore.getState();
+
+      // Validar que el servicio de email esté configurado
+      if (!isEmailConfigValid()) {
+        showError('El servicio de email no está configurado. Por favor, configure el email en Ajustes.');
+        return;
+      }
+
+      const clientsWithDebt = getClientsByStatus('debt');
+
+      if (clientsWithDebt.length === 0) {
+        showError('No hay clientes con deuda para enviar recordatorios');
+        return;
+      }
+
+      // Preparar datos de clientes para envío de emails
+      const clientsWithEmailData = clientsWithDebt.map(client => {
+        const debtSummary = getClientSummary(client.id);
+        const extendedData = getExtendedData(client.id);
+
+        return {
+          fullName: client.fullName,
+          email: client.email,
+          debtAmount: debtSummary.balance || 0,
+          monthsOverdue: debtSummary.overdueMonths || 0,
+          oldestDebtDate: extendedData?.oldestDebtDate
+            ? new Date(extendedData.oldestDebtDate).toLocaleDateString('es-PE')
+            : 'N/A'
+        };
+      });
+
+      info(`Enviando recordatorios por correo a ${clientsWithEmailData.length} cliente(s)...`);
+
+      // Enviar emails masivamente
+      const results = await sendBulkPaymentReminders(clientsWithEmailData);
+
+      // Mostrar resultados
+      if (results.sent.length > 0) {
+        success(
+          `Se enviaron ${results.sent.length} recordatorio(s) por correo exitosamente`
+        );
+      }
+
+      if (results.failed.length > 0) {
+        const failedNames = results.failed.map(f => `${f.client} (${f.error})`).join(', ');
+        showError(
+          `${results.failed.length} recordatorio(s) fallaron: ${failedNames.substring(0, 200)}${failedNames.length > 200 ? '...' : ''}`
+        );
+      }
+
+    } catch (error) {
+      showError('Error al enviar recordatorios: ' + error.message);
+    }
+  };
+
   // Obtener información extendida de un cliente
   const getClientExtendedInfo = (client) => {
     const extendedData = getExtendedData(client.id);
     const debtSummary = getClientSummary(client.id);
     const effectiveCost = getClientEffectiveCost(client.id, client);
-    
+
     return {
       extendedData,
       debtSummary,
@@ -694,6 +756,16 @@ const ClientManagement = () => {
             <span className="hidden sm:inline">Exportar Excel</span>
             <span className="sm:hidden">Exportar</span>
           </button>
+          {statusStats.debt > 0 && (
+            <button
+              onClick={handleSendReminders}
+              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 sm:px-4 sm:text-sm"
+            >
+              <Mail className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Enviar Recordatorios por Correo ({statusStats.debt})</span>
+              <span className="sm:hidden">Enviar</span>
+            </button>
+          )}
           <button
             onClick={handleAddClient}
             className="flex items-center px-3 py-2 bg-primary text-white rounded-md text-xs font-medium hover:bg-blue-600 sm:px-4 sm:text-sm"

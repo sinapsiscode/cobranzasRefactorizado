@@ -214,8 +214,7 @@ export const exportMonthlyDebtMatrixToExcel = (clients, year, getClientDebts, ge
 
   const months = Array.from({ length: 12 }, (_, i) => ({
     month: i + 1,
-    name: getMonthName(i + 1),
-    shortName: getMonthName(i + 1).substring(0, 3)
+    name: getMonthName(i + 1)
   }));
 
   // Función auxiliar para obtener nombre del mes
@@ -227,56 +226,30 @@ export const exportMonthlyDebtMatrixToExcel = (clients, year, getClientDebts, ge
     return months[monthNumber - 1] || '';
   }
 
-  // Función auxiliar para obtener el estado de la celda
-  function getCellStatus(debt) {
-    if (!debt) return 'Sin Deuda';
-
-    switch (debt.status) {
-      case 'paid': return 'Pagado';
-      case 'pending': return 'Pendiente';
-      case 'overdue': return 'Vencido';
-      case 'partial': return 'Parcial';
-      default: return debt.status || 'Sin Deuda';
-    }
-  }
-
-  // Función auxiliar para formatear monto
-  function formatAmount(amount) {
-    return amount ? `S/. ${amount.toFixed(2)}` : '';
-  }
-
   const matrixData = clients.map(client => {
-    const summary = getClientSummary(client.id);
     const row = {
       'Cliente': client.fullName,
-      'DNI': client.dni || '',
-      'Barrio': client.neighborhood || '',
-      'Teléfono': client.phone || '',
-      'Plan': client.servicePlan || '',
-      'Estado': client.status === 'active' ? 'Activo' :
-                client.status === 'paused' ? 'En Pausa' :
-                client.status === 'debt' ? 'Con Deuda' :
-                client.status === 'suspended' ? 'Suspendido' : 'De Baja',
-      'Meses Adeudados': summary.monthsOwed || 0,
-      'Deuda Total': formatAmount(summary.totalOwed)
+      'N° de celular': client.phone || ''
     };
 
-    // Agregar columnas para cada mes
+    // Agregar columna para cada mes
     months.forEach(month => {
       const debts = getClientDebts(client.id, year);
       const monthDebt = debts.find(debt => debt.month === month.month);
 
-      // Columna de estado del mes
-      row[`${month.shortName} ${year} - Estado`] = getCellStatus(monthDebt);
-
-      // Columna de monto del mes
-      row[`${month.shortName} ${year} - Monto`] = monthDebt ? formatAmount(monthDebt.amount) : '';
-
-      // Columna de fecha de pago (si existe)
-      if (monthDebt && monthDebt.paymentDate) {
-        row[`${month.shortName} ${year} - Fecha Pago`] = new Date(monthDebt.paymentDate).toLocaleDateString('es-PE');
+      // Si existe deuda para este mes
+      if (monthDebt) {
+        // Si está pagada, mostrar "Pagado"
+        if (monthDebt.status === 'paid' || monthDebt.status === 'collected' || monthDebt.status === 'validated') {
+          row[month.name] = 'Pagado';
+        }
+        // Si no está pagada, mostrar el monto pendiente
+        else {
+          row[month.name] = `S/ ${monthDebt.amount.toFixed(2)}`;
+        }
       } else {
-        row[`${month.shortName} ${year} - Fecha Pago`] = '';
+        // Si no hay deuda registrada para ese mes, dejar vacío
+        row[month.name] = '';
       }
     });
 
@@ -287,4 +260,103 @@ export const exportMonthlyDebtMatrixToExcel = (clients, year, getClientDebts, ge
   const filename = `matriz-deudas-mensuales-${year}-${timestamp}`;
 
   exportToExcel(matrixData, filename, `Matriz Deudas ${year}`);
+};
+
+export const exportBackupToExcel = (backupData) => {
+  if (!backupData || !backupData.paymentReport) {
+    throw new Error('Datos de backup inválidos');
+  }
+
+  const { paymentReport, metadata } = backupData;
+  const timestamp = new Date(backupData.timestamp).toLocaleDateString('es-PE').replace(/\//g, '-');
+
+  // Crear un libro de trabajo
+  const workbook = XLSX.utils.book_new();
+
+  // HOJA 1: Resumen General
+  const summaryData = [
+    { 'Descripción': 'Fecha del Backup', 'Valor': new Date(backupData.timestamp).toLocaleString('es-PE') },
+    { 'Descripción': 'Versión', 'Valor': backupData.version },
+    { 'Descripción': '', 'Valor': '' },
+    { 'Descripción': '=== CLIENTES ===', 'Valor': '' },
+    { 'Descripción': 'Total de Clientes', 'Valor': metadata.totalClients },
+    { 'Descripción': 'Clientes con Deuda', 'Valor': metadata.clientsWithDebt },
+    { 'Descripción': 'Clientes al Día', 'Valor': metadata.clientsPaid },
+    { 'Descripción': '', 'Valor': '' },
+    { 'Descripción': '=== MONTOS ===', 'Valor': '' },
+    { 'Descripción': 'Total Deuda Pendiente', 'Valor': `S/ ${metadata.totalDebtAmount.toFixed(2)}` },
+    { 'Descripción': 'Total Pagado', 'Valor': `S/ ${metadata.totalPaidAmount.toFixed(2)}` },
+    { 'Descripción': '', 'Valor': '' },
+    { 'Descripción': '=== OTROS DATOS ===', 'Valor': '' },
+    { 'Descripción': 'Total de Pagos', 'Valor': metadata.totalPayments },
+    { 'Descripción': 'Total de Servicios', 'Valor': metadata.totalServices },
+    { 'Descripción': 'Total de Cajas', 'Valor': metadata.totalCashBoxes },
+    { 'Descripción': 'Tamaño del Backup', 'Valor': `${metadata.backupSize} KB` }
+  ];
+
+  const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Resumen');
+
+  // HOJA 2: Clientes con Deuda
+  if (paymentReport.clientsWithDebt && paymentReport.clientsWithDebt.length > 0) {
+    const debtData = paymentReport.clientsWithDebt.map(client => ({
+      'Cliente': client.fullName,
+      'DNI': client.dni || '',
+      'N° de Celular': client.phone || '',
+      'Deuda Total': `S/ ${client.totalDebt.toFixed(2)}`,
+      'Pagos Pendientes': client.pendingPaymentsCount,
+      'Plan': client.servicePlan || '',
+      'Barrio': client.neighborhood || ''
+    }));
+
+    const debtWorksheet = XLSX.utils.json_to_sheet(debtData);
+    XLSX.utils.book_append_sheet(workbook, debtWorksheet, 'Clientes con Deuda');
+  }
+
+  // HOJA 3: Clientes que Han Pagado
+  if (paymentReport.clientsPaid && paymentReport.clientsPaid.length > 0) {
+    const paidData = paymentReport.clientsPaid.map(client => ({
+      'Cliente': client.fullName,
+      'DNI': client.dni || '',
+      'N° de Celular': client.phone || '',
+      'Total Pagado': `S/ ${client.totalPaid.toFixed(2)}`,
+      'Pagos Realizados': client.paidPaymentsCount,
+      'Último Pago': client.lastPaymentDate ? new Date(client.lastPaymentDate).toLocaleDateString('es-PE') : 'N/A',
+      'Plan': client.servicePlan || '',
+      'Barrio': client.neighborhood || ''
+    }));
+
+    const paidWorksheet = XLSX.utils.json_to_sheet(paidData);
+    XLSX.utils.book_append_sheet(workbook, paidWorksheet, 'Clientes al Día');
+  }
+
+  // HOJA 4: Todos los Clientes con Estado
+  if (paymentReport.clientsWithPaymentStatus && paymentReport.clientsWithPaymentStatus.length > 0) {
+    const allClientsData = paymentReport.clientsWithPaymentStatus.map(client => ({
+      'Cliente': client.fullName,
+      'DNI': client.dni || '',
+      'N° de Celular': client.phone || '',
+      'Email': client.email || '',
+      'Plan': client.servicePlan || '',
+      'Tipo de Servicio': client.serviceType || '',
+      'Barrio': client.neighborhood || '',
+      'Estado Cliente': client.status || '',
+      'Tiene Deuda': client.paymentStatus.hasDebt ? 'SÍ' : 'NO',
+      'Ha Pagado': client.paymentStatus.hasPaid ? 'SÍ' : 'NO',
+      'Deuda Pendiente': `S/ ${client.paymentStatus.totalDebt.toFixed(2)}`,
+      'Total Pagado': `S/ ${client.paymentStatus.totalPaid.toFixed(2)}`,
+      'Pagos Pendientes': client.paymentStatus.pendingPaymentsCount,
+      'Pagos Realizados': client.paymentStatus.paidPaymentsCount,
+      'Último Pago': client.paymentStatus.lastPaymentDate ? new Date(client.paymentStatus.lastPaymentDate).toLocaleDateString('es-PE') : 'N/A'
+    }));
+
+    const allClientsWorksheet = XLSX.utils.json_to_sheet(allClientsData);
+    XLSX.utils.book_append_sheet(workbook, allClientsWorksheet, 'Todos los Clientes');
+  }
+
+  // Escribir el archivo Excel
+  const filename = `backup-completo-${timestamp}`;
+  XLSX.writeFile(workbook, `${filename}.xlsx`);
+
+  return filename;
 };

@@ -25,12 +25,17 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
   // Estados del formulario de pago
   const [paymentData, setPaymentData] = useState({
     amount: '',
+    paymentMonth: new Date().toISOString().slice(0, 7), // Formato YYYY-MM
     paymentMethod: 'efectivo',
     description: '',
     paymentDate: new Date().toISOString().split('T')[0],
     dueDate: new Date().toISOString().split('T')[0],
     selectedServiceType: 'internet'
   });
+
+  const [isPartialPayment, setIsPartialPayment] = useState(false);
+  const [isAdvancePayment, setIsAdvancePayment] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Resetear modal al abrir/cerrar
   useEffect(() => {
@@ -41,14 +46,32 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
       setFilteredClients([]);
       setPaymentData({
         amount: '',
+        paymentMonth: new Date().toISOString().slice(0, 7),
         paymentMethod: 'efectivo',
         description: '',
         paymentDate: new Date().toISOString().split('T')[0],
         dueDate: new Date().toISOString().split('T')[0],
         selectedServiceType: 'internet'
       });
+      setIsPartialPayment(false);
+      setIsAdvancePayment(false);
+      setIsSubmitting(false);
     }
   }, [isOpen]);
+
+  // Detectar si es pago parcial o adelantado
+  useEffect(() => {
+    if (selectedClient && paymentData.amount) {
+      const planPrice = calculateServicePrice(paymentData.selectedServiceType, selectedClient.servicePlan);
+      const amount = parseFloat(paymentData.amount);
+      setIsPartialPayment(amount > 0 && amount < planPrice);
+    }
+
+    if (paymentData.paymentMonth) {
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      setIsAdvancePayment(paymentData.paymentMonth > currentMonth);
+    }
+  }, [paymentData.amount, paymentData.paymentMonth, paymentData.selectedServiceType, selectedClient]);
 
   // Buscar clientes cuando cambia el término de búsqueda
   useEffect(() => {
@@ -166,39 +189,81 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
   // Registrar pago
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
+    setIsSubmitting(true);
+
     try {
-      const newPayment = {
-        clientId: selectedClient.id,
-        amount: parseFloat(paymentData.amount),
-        paymentMethod: paymentData.paymentMethod,
-        description: paymentData.description || `Pago registrado por ${user?.name || 'Usuario'}`,
-        paymentDate: paymentData.paymentDate,
-        dueDate: paymentData.dueDate,
-        status: 'collected', // Directamente como cobrado
-        collectorId: user?.id,
-        registeredBy: user?.id,
-        registeredAt: new Date().toISOString()
+      const amount = parseFloat(paymentData.amount);
+      const [year, monthNum] = paymentData.paymentMonth.split('-');
+
+      // Calcular fecha de vencimiento basada en el mes seleccionado
+      const dueDay = selectedClient.preferredPaymentDay || 15;
+      const dueDate = new Date(parseInt(year), parseInt(monthNum) - 1, dueDay);
+
+      // Mapear método de pago al formato del esquema
+      const methodMapping = {
+        'efectivo': 'cash',
+        'transferencia': 'transfer',
+        'deposito': 'deposit',
+        'yape': 'transfer',
+        'plin': 'transfer'
       };
 
+      // Determinar el tipo de servicio (el esquema solo acepta 'internet' o 'cable')
+      let serviceType = paymentData.selectedServiceType || 'internet';
+      if (serviceType === 'duo') {
+        serviceType = 'internet'; // Para DUO, usar internet por defecto
+      }
+
+      // Generar descripción automática
+      let description = paymentData.description;
+      if (!description) {
+        const planPrice = calculateServicePrice(serviceType, selectedClient.servicePlan);
+        const percentage = ((amount / planPrice) * 100).toFixed(0);
+        const paymentType = isPartialPayment ? `Pago parcial (${percentage}%)` : 'Pago completo';
+        const advanceText = isAdvancePayment ? ' adelantado' : '';
+        description = `${paymentType}${advanceText} registrado por ${user?.name || 'Administrador'}`;
+      }
+
+      const newPayment = {
+        clientId: selectedClient.id,
+        serviceType: serviceType,
+        amount: amount,
+        dueDate: dueDate.toISOString(),
+        paymentDate: paymentData.paymentDate,
+        status: isPartialPayment ? 'partial' : 'collected',
+        paymentMethod: methodMapping[paymentData.paymentMethod] || 'cash',
+        comments: description,
+        collectorId: user?.id,
+        month: paymentData.paymentMonth, // Formato YYYY-MM
+        year: parseInt(year),
+        isAdvancePayment: isAdvancePayment // Indica si es pago adelantado
+      };
+
+      console.log('📤 Datos de pago a enviar (admin):', newPayment);
+
       await createPayment(newPayment);
-      success(`Pago de S/ ${paymentData.amount} registrado exitosamente para ${selectedClient.fullName}`);
+
+      const paymentTypeText = isPartialPayment ? `Pago parcial de S/ ${amount.toFixed(2)}` : `Pago de S/ ${amount.toFixed(2)}`;
+      const advanceText = isAdvancePayment ? ' adelantado' : '';
+
+      success(`${paymentTypeText}${advanceText} registrado exitosamente para ${selectedClient.fullName}`);
       onClose();
     } catch (error) {
       console.error('Error registrando pago:', error);
-      showError('Error al registrar el pago. Intente nuevamente.');
+      showError(error.errors ? `Datos inválidos - ${JSON.stringify(error.errors)}` : 'Error al registrar el pago. Intente nuevamente.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (!isOpen) return null;
 
-  const isLoading = clientsLoading || paymentsLoading;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-auto max-h-[95vh] overflow-y-auto sm:max-w-2xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-full mx-auto max-h-[98vh] overflow-y-auto sm:max-w-lg md:max-w-2xl sm:max-h-[95vh]">
         
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 sm:p-6">
@@ -215,23 +280,25 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
         <form onSubmit={handleSubmit} className="p-4 space-y-4 sm:p-6 sm:space-y-6">
           
           {/* Buscador de cliente */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Buscar Cliente por DNI, Nombre o Teléfono
-            </label>
+          {!selectedClient && (
+            <div className="relative space-y-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                Buscar Cliente por DNI, Nombre o Teléfono
+              </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
               </div>
               <input
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
-                placeholder="Ingrese DNI, nombre o teléfono..."
-                className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:pl-10 sm:py-3 sm:text-sm"
+                placeholder="DNI, nombre o teléfono..."
+                className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:pl-10 sm:py-2.5"
+                disabled={!!selectedClient}
               />
-              {isLoading && (
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              {clientsLoading && !selectedClient && (
+                <div className="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center">
                   <LoadingSpinner size="small" />
                 </div>
               )}
@@ -239,7 +306,7 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
 
             {/* Resultados de búsqueda */}
             {showClientResults && (
-              <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto sm:max-h-60">
+              <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto sm:max-h-60">
                 {filteredClients.length > 0 ? (
                   filteredClients.map((client) => (
                     <button
@@ -268,21 +335,22 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
                 )}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Cliente seleccionado */}
           {selectedClient && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 overflow-hidden">
               <div className="flex items-start space-x-2 sm:space-x-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 sm:w-10 sm:h-10">
                   <User className="h-4 w-4 text-blue-600 sm:h-5 sm:w-5" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-blue-900 sm:text-base">{selectedClient.fullName}</p>
-                  <p className="text-xs text-blue-700 sm:text-sm">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="text-sm font-medium text-blue-900 sm:text-base truncate">{selectedClient.fullName}</p>
+                  <p className="text-xs text-blue-700 sm:text-sm truncate">
                     DNI: {selectedClient.dni} • {selectedClient.phone}
                   </p>
-                  <p className="text-xs text-blue-600 sm:text-sm">
+                  <p className="text-xs text-blue-600 sm:text-sm truncate">
                     Plan: {selectedClient.servicePlan?.charAt(0).toUpperCase() + selectedClient.servicePlan?.slice(1)}
                     {selectedClient.serviceType && ` • ${getServiceLabel(selectedClient.serviceType)}`}
                   </p>
@@ -307,68 +375,96 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
             <div className="space-y-4 sm:space-y-6">
               {/* Selector de tipo de servicio */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Tipo de Servicio
                 </label>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => handleServiceTypeChange('internet')}
-                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                    className={`p-2 sm:p-3 border rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                       paymentData.selectedServiceType === 'internet'
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
                         : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-lg mb-1">📡</div>
-                      <div>Internet</div>
-                      <div className="text-xs text-gray-500">S/ {getServicePrice('internet')}</div>
+                      <div className="text-base sm:text-lg mb-0.5 sm:mb-1">📡</div>
+                      <div className="text-xs sm:text-sm">Internet</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500">S/ {getServicePrice('internet')}</div>
                     </div>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleServiceTypeChange('cable')}
-                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                    className={`p-2 sm:p-3 border rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                       paymentData.selectedServiceType === 'cable'
                         ? 'border-purple-500 bg-purple-50 text-purple-700'
                         : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-lg mb-1">📺</div>
-                      <div>Cable/TV</div>
-                      <div className="text-xs text-gray-500">S/ {getServicePrice('cable')}</div>
+                      <div className="text-base sm:text-lg mb-0.5 sm:mb-1">📺</div>
+                      <div className="text-xs sm:text-sm">Cable</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500">S/ {getServicePrice('cable')}</div>
                     </div>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleServiceTypeChange('duo')}
-                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                    className={`p-2 sm:p-3 border rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                       paymentData.selectedServiceType === 'duo'
                         ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                         : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-lg mb-1">📡📺</div>
-                      <div>Dúo</div>
-                      <div className="text-xs text-gray-500">S/ {getServicePrice('duo')}</div>
+                      <div className="text-base sm:text-lg mb-0.5 sm:mb-1">📡📺</div>
+                      <div className="text-xs sm:text-sm">Dúo</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500">S/ {getServicePrice('duo')}</div>
                     </div>
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+              {/* Mes de pago */}
+              <div className="mb-4 sm:mb-6">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                  Mes de Pago *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="month"
+                    name="paymentMonth"
+                    value={paymentData.paymentMonth}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full pl-8 pr-4 py-2 sm:pl-10 sm:pr-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  />
+                </div>
+
+                {/* Indicador de pago adelantado */}
+                {paymentData.paymentMonth && isAdvancePayment && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md text-xs sm:text-sm text-blue-800">
+                    <span className="font-semibold">🔵 Pago Adelantado</span>
+                    <span className="ml-1 sm:ml-2 block sm:inline">Este mes aún no ha vencido</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+
                 {/* Monto */}
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Monto (S/)
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <DollarSign className="h-5 w-5 text-gray-400" />
+                  <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                   </div>
                   <input
                     type="number"
@@ -378,26 +474,36 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
                     min="0"
                     step="0.01"
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-8 pr-4 py-2 sm:pl-10 sm:pr-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     placeholder="0.00"
                   />
                 </div>
+
+                {/* Indicador de pago parcial */}
+                {selectedClient && paymentData.amount && isPartialPayment && (
+                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md text-xs sm:text-sm text-yellow-800">
+                    <span className="font-semibold">⚠️ Pago Parcial</span>
+                    <span className="ml-1 sm:ml-2">
+                      {((parseFloat(paymentData.amount) / calculateServicePrice(paymentData.selectedServiceType, selectedClient.servicePlan)) * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Método de pago */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Método de Pago
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <CreditCard className="h-5 w-5 text-gray-400" />
+                  <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                    <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                   </div>
                   <select
                     name="paymentMethod"
                     value={paymentData.paymentMethod}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-8 pr-4 py-2 sm:pl-10 sm:pr-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   >
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
@@ -410,12 +516,12 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
 
               {/* Fecha de pago */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Fecha de Pago
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Calendar className="h-5 w-5 text-gray-400" />
+                  <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                   </div>
                   <input
                     type="date"
@@ -423,19 +529,19 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
                     value={paymentData.paymentDate}
                     onChange={handleInputChange}
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-8 pr-4 py-2 sm:pl-10 sm:pr-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   />
                 </div>
               </div>
 
               {/* Fecha de vencimiento */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Fecha de Vencimiento
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Calendar className="h-5 w-5 text-gray-400" />
+                  <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                   </div>
                   <input
                     type="date"
@@ -443,14 +549,14 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
                     value={paymentData.dueDate}
                     onChange={handleInputChange}
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-8 pr-4 py-2 sm:pl-10 sm:pr-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   />
                 </div>
               </div>
 
               {/* Descripción */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Descripción (Opcional)
                 </label>
                 <textarea
@@ -458,7 +564,7 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
                   value={paymentData.description}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   placeholder="Descripción adicional del pago..."
                 />
                 </div>
@@ -469,28 +575,28 @@ const PaymentRegistrationModal = ({ isOpen, onClose }) => {
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 sm:px-6 sm:py-3 border border-gray-300 rounded-lg text-gray-700 text-sm sm:text-base font-medium hover:bg-white transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             onClick={handleSubmit}
-            disabled={!selectedClient || isLoading || !paymentData.amount}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+            disabled={!selectedClient || isSubmitting || !paymentData.amount}
+            className="w-full sm:w-auto px-4 py-2.5 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg text-sm sm:text-base font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
           >
-            {isLoading ? (
+            {isSubmitting ? (
               <>
                 <LoadingSpinner size="small" />
                 <span>Registrando...</span>
               </>
             ) : (
               <>
-                <Check className="h-5 w-5" />
+                <Check className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Registrar Pago</span>
               </>
             )}

@@ -27,6 +27,8 @@ const CollectorClients = () => {
     paidMonth: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPartialPayment, setIsPartialPayment] = useState(false);
+  const [isAdvancePayment, setIsAdvancePayment] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -107,12 +109,16 @@ const CollectorClients = () => {
   const openPaymentModal = (client, specificMonth = null) => {
     setSelectedClient(client);
     const planInfo = getPlanInfo(client.servicePlan);
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
     setPaymentForm({
       method: 'cash',
       amount: planInfo.price.toString(),
       description: '',
-      paidMonth: specificMonth || new Date().toISOString().slice(0, 7)
+      paidMonth: specificMonth || currentMonth
     });
+    setIsPartialPayment(false);
+    setIsAdvancePayment(false);
     setPaymentModalOpen(true);
   };
 
@@ -125,6 +131,38 @@ const CollectorClients = () => {
       description: '',
       paidMonth: ''
     });
+    setIsPartialPayment(false);
+    setIsAdvancePayment(false);
+  };
+
+  // Función para detectar si un mes es adelantado (futuro)
+  const checkIfAdvancePayment = (selectedMonth) => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const isAdvanced = selectedMonth > currentMonth;
+    setIsAdvancePayment(isAdvanced);
+    return isAdvanced;
+  };
+
+  // Función para establecer el monto del pago
+  const setPaymentAmount = (amount, planPrice) => {
+    setPaymentForm(prev => ({ ...prev, amount: amount.toString() }));
+    // Detectar si es pago parcial
+    const isPartial = parseFloat(amount) < planPrice;
+    setIsPartialPayment(isPartial);
+  };
+
+  // Funciones para pagos rápidos
+  const setFullPayment = () => {
+    if (!selectedClient) return;
+    const planInfo = getPlanInfo(selectedClient.servicePlan);
+    setPaymentAmount(planInfo.price, planInfo.price);
+  };
+
+  const setPartialPaymentPercentage = (percentage) => {
+    if (!selectedClient) return;
+    const planInfo = getPlanInfo(selectedClient.servicePlan);
+    const amount = (planInfo.price * percentage / 100).toFixed(2);
+    setPaymentAmount(parseFloat(amount), planInfo.price);
   };
 
   const handlePaymentSubmit = async (e) => {
@@ -141,31 +179,94 @@ const CollectorClients = () => {
     setIsSubmitting(true);
 
     try {
+      const planInfo = getPlanInfo(selectedClient.servicePlan);
+      const amount = parseFloat(paymentForm.amount);
+      const percentage = ((amount / planInfo.price) * 100).toFixed(0);
+
+      // Extraer año y mes del paidMonth (formato YYYY-MM)
+      const [year, monthNum] = paymentForm.paidMonth.split('-');
+
+      // Calcular fecha de vencimiento (día preferido de pago del cliente)
+      const dueDay = selectedClient.preferredPaymentDay || 15;
+      const dueDate = new Date(parseInt(year), parseInt(monthNum) - 1, dueDay);
+
+      // Generar descripción automática si no hay una personalizada
+      let description = paymentForm.description;
+      if (!description) {
+        const methodText = paymentForm.method === 'cash' ? 'efectivo' :
+                          paymentForm.method === 'bank_transfer' ? 'transferencia' :
+                          paymentForm.method;
+
+        const paymentType = isPartialPayment ? `Pago parcial (${percentage}%)` : 'Pago completo';
+        const advanceText = isAdvancePayment ? ' adelantado' : '';
+        description = `${paymentType}${advanceText} por ${methodText}`;
+      }
+
+      // Mapear método de pago al formato del esquema
+      const methodMapping = {
+        'cash': 'cash',
+        'bank_transfer': 'transfer',
+        'yape': 'transfer',
+        'plin': 'transfer'
+      };
+
+      // Determinar el tipo de servicio (el esquema solo acepta 'internet' o 'cable')
+      let serviceType = selectedClient.serviceType || 'internet';
+      if (serviceType === 'duo') {
+        // Para clientes DUO, usar internet por defecto
+        serviceType = 'internet';
+      }
+
       const paymentData = {
         clientId: selectedClient.id,
-        method: paymentForm.method,
-        amount: parseFloat(paymentForm.amount),
-        description: paymentForm.description || `Pago de ${paymentForm.method === 'cash' ? 'efectivo' : paymentForm.method}`,
-        paidMonth: paymentForm.paidMonth,
+        serviceType: serviceType,
+        amount: amount,
+        dueDate: dueDate.toISOString(),
+        status: isPartialPayment ? 'partial' : 'pending',
+        paymentMethod: methodMapping[paymentForm.method] || 'cash',
+        comments: description,
         collectorId: user.id,
-        status: 'pending'
+        month: paymentForm.paidMonth, // Formato YYYY-MM
+        year: parseInt(year),
+        isAdvancePayment: isAdvancePayment // Indica si es pago adelantado
       };
+
+      console.log('📤 Datos de pago a enviar:', paymentData);
 
       await createPayment(paymentData);
 
+      const paymentTypeText = isPartialPayment ? `Pago parcial de S/ ${amount.toFixed(2)}` : 'Pago completo';
+      const advanceText = isAdvancePayment ? ' adelantado' : '';
+
       addNotification({
         type: 'success',
-        message: 'Pago registrado exitosamente'
+        message: `${paymentTypeText}${advanceText} registrado exitosamente`
       });
 
       closePaymentModal();
       await fetchPayments();
 
     } catch (error) {
-      console.error('Error al registrar el pago:', error);
+      console.error('❌ Error completo al registrar el pago:', error);
+      console.error('❌ Error.error:', error.error);
+      console.error('❌ Error.errors:', error.errors);
+      console.error('❌ JSON del error:', JSON.stringify(error, null, 2));
+
+      let errorMessage = 'Error al registrar el pago. Intente nuevamente.';
+
+      // Mostrar errores específicos si existen
+      if (error.errors) {
+        const errorDetails = Object.entries(error.errors)
+          .map(([field, message]) => `${field}: ${message}`)
+          .join(', ');
+        errorMessage = `Datos inválidos - ${errorDetails}`;
+      } else if (error.error) {
+        errorMessage = error.error;
+      }
+
       addNotification({
         type: 'error',
-        message: 'Error al registrar el pago. Intente nuevamente.'
+        message: errorMessage
       });
     } finally {
       setIsSubmitting(false);
@@ -441,10 +542,21 @@ const CollectorClients = () => {
                       <input
                         type="month"
                         value={paymentForm.paidMonth}
-                        onChange={(e) => setPaymentForm(prev => ({ ...prev, paidMonth: e.target.value }))}
+                        onChange={(e) => {
+                          setPaymentForm(prev => ({ ...prev, paidMonth: e.target.value }));
+                          checkIfAdvancePayment(e.target.value);
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                         required
                       />
+
+                      {/* Indicador de pago adelantado */}
+                      {paymentForm.paidMonth && isAdvancePayment && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                          <span className="font-semibold">🔵 Pago Adelantado</span>
+                          <span className="ml-2">Este mes aún no ha vencido</span>
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -468,16 +580,83 @@ const CollectorClients = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Monto *
                       </label>
+
+                      {/* Indicador de precio del plan */}
+                      <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-blue-700">Precio del plan:</span>
+                          <span className="font-semibold text-blue-900">
+                            S/ {getPlanInfo(selectedClient.servicePlan).price.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Botones rápidos para pagos parciales */}
+                      <div className="mb-2 grid grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPartialPaymentPercentage(25)}
+                          className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border border-gray-300 transition-colors"
+                        >
+                          25%
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPartialPaymentPercentage(50)}
+                          className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border border-gray-300 transition-colors"
+                        >
+                          50%
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPartialPaymentPercentage(75)}
+                          className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border border-gray-300 transition-colors"
+                        >
+                          75%
+                        </button>
+                        <button
+                          type="button"
+                          onClick={setFullPayment}
+                          className="px-2 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded border border-green-300 transition-colors font-medium"
+                        >
+                          100%
+                        </button>
+                      </div>
+
                       <input
                         type="number"
                         step="0.01"
                         min="0"
+                        max={getPlanInfo(selectedClient.servicePlan).price}
                         value={paymentForm.amount}
-                        onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
+                        onChange={(e) => {
+                          const planPrice = getPlanInfo(selectedClient.servicePlan).price;
+                          setPaymentAmount(e.target.value, planPrice);
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                         placeholder="0.00"
                         required
                       />
+
+                      {/* Indicador de tipo de pago */}
+                      {paymentForm.amount && (
+                        <div className={`mt-2 p-2 rounded-md text-sm ${
+                          isPartialPayment
+                            ? 'bg-yellow-50 border border-yellow-200 text-yellow-800'
+                            : 'bg-green-50 border border-green-200 text-green-800'
+                        }`}>
+                          {isPartialPayment ? (
+                            <div className="flex items-center justify-between">
+                              <span>⚠️ Pago Parcial</span>
+                              <span className="font-semibold">
+                                {((parseFloat(paymentForm.amount) / getPlanInfo(selectedClient.servicePlan).price) * 100).toFixed(0)}%
+                              </span>
+                            </div>
+                          ) : (
+                            <span>✓ Pago Completo</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div>

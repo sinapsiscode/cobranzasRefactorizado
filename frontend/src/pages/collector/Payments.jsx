@@ -73,10 +73,10 @@ const CollectorPayments = () => {
   // Filtrar pagos de TODOS los clientes (solo mostrar deudores)
   const getFilteredPayments = () => {
     let filtered = payments.filter(p => allClientIds.includes(p.clientId));
-    
+
     // Filtrar por estado
     if (filterStatus === 'pending') {
-      filtered = filtered.filter(p => p.status === 'pending' || p.status === 'overdue');
+      filtered = filtered.filter(p => p.status === 'pending' || p.status === 'overdue' || p.status === 'partial');
     } else if (filterStatus === 'paid') {
       filtered = filtered.filter(p => p.status === 'collected' || p.status === 'validated' || p.status === 'paid');
     }
@@ -336,6 +336,12 @@ const CollectorPayments = () => {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  // Función para detectar si un pago es adelantado
+  const isAdvancePayment = (paymentMonth) => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    return paymentMonth > currentMonth;
+  };
+
   const getStatusIcon = (status) => {
     const icons = {
       pending: <Clock className="h-4 w-4 text-yellow-600" />,
@@ -471,7 +477,7 @@ const CollectorPayments = () => {
             const planInfo = getPlanInfo(client?.servicePlan);
             
             // Separar pagos por estado para mostrarlos organizadamente
-            const pendingPayments = clientPayments.filter(p => p.status === 'pending' || p.status === 'overdue');
+            const pendingPayments = clientPayments.filter(p => p.status === 'pending' || p.status === 'overdue' || p.status === 'partial');
             const paidPayments = clientPayments.filter(p => ['collected', 'validated', 'paid'].includes(p.status));
             
             return (
@@ -521,21 +527,40 @@ const CollectorPayments = () => {
                             }}
                             disabled={!hasCurrentCashBox()}
                             className={`p-3 rounded-lg border text-left transition-colors ${
-                              !hasCurrentCashBox() 
-                                ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed' 
-                                : payment.status === 'overdue' 
-                                  ? 'border-red-300 bg-red-50 hover:bg-red-100 hover:border-red-400' 
-                                  : 'border-gray-300 bg-white hover:bg-blue-50 hover:border-blue-300'
+                              !hasCurrentCashBox()
+                                ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                                : payment.status === 'overdue'
+                                  ? 'border-red-300 bg-red-50 hover:bg-red-100 hover:border-red-400'
+                                  : payment.status === 'partial'
+                                    ? 'border-orange-300 bg-orange-50 hover:bg-orange-100 hover:border-orange-400'
+                                    : isAdvancePayment(payment.month)
+                                      ? 'border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400'
+                                      : 'border-gray-300 bg-white hover:bg-blue-50 hover:border-blue-300'
                             }`}
                           >
                             <div className="flex items-center justify-between mb-1">
                               <span className={`text-sm font-medium ${
-                                payment.status === 'overdue' ? 'text-red-700' : 'text-gray-900'
+                                payment.status === 'overdue' ? 'text-red-700' :
+                                payment.status === 'partial' ? 'text-orange-700' :
+                                isAdvancePayment(payment.month) ? 'text-blue-700' :
+                                'text-gray-900'
                               }`}>
                                 {getMonthName(payment.month)}
+                                {payment.status === 'partial' && (
+                                  <span className="ml-1 text-xs">(Parcial)</span>
+                                )}
+                                {(payment.isAdvancePayment || isAdvancePayment(payment.month)) && (
+                                  <span className="ml-1 text-xs text-blue-600">(Adelantado)</span>
+                                )}
                               </span>
                               {payment.status === 'overdue' && (
                                 <AlertTriangle className="h-4 w-4 text-red-600" />
+                              )}
+                              {payment.status === 'partial' && (
+                                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                              )}
+                              {(payment.isAdvancePayment || isAdvancePayment(payment.month)) && payment.status !== 'overdue' && payment.status !== 'partial' && (
+                                <span className="text-blue-600">🔵</span>
                               )}
                             </div>
                             <div className={`text-lg font-bold ${
@@ -545,9 +570,14 @@ const CollectorPayments = () => {
                             </div>
                             <div className={`text-xs ${
                               !hasCurrentCashBox() ? 'text-gray-400' :
-                              payment.status === 'overdue' ? 'text-red-600' : 'text-gray-500'
+                              payment.status === 'overdue' ? 'text-red-600' :
+                              payment.status === 'partial' ? 'text-orange-600' :
+                              (payment.isAdvancePayment || isAdvancePayment(payment.month)) ? 'text-blue-600' :
+                              'text-gray-500'
                             }`}>
-                              {!hasCurrentCashBox() ? 'Abra su caja primero' : 
+                              {!hasCurrentCashBox() ? 'Abra su caja primero' :
+                               payment.status === 'partial' ? 'Pago parcial pendiente' :
+                               (payment.isAdvancePayment || isAdvancePayment(payment.month)) ? 'Pago adelantado' :
                                `Vence: ${new Date(payment.dueDate).toLocaleDateString('es-PE')}`}
                             </div>
                           </button>
@@ -657,7 +687,7 @@ const CollectorPayments = () => {
                     <span className="font-medium text-red-700">
                       {(() => {
                         const clientPayments = payments.filter(p => p.clientId === selectedPayment.clientId);
-                        const pendingCount = clientPayments.filter(p => p.status === 'pending' || p.status === 'overdue').length;
+                        const pendingCount = clientPayments.filter(p => p.status === 'pending' || p.status === 'overdue' || p.status === 'partial').length;
                         return pendingCount;
                       })()}
                     </span>
@@ -668,7 +698,7 @@ const CollectorPayments = () => {
                       S/ {(() => {
                         const clientPayments = payments.filter(p => p.clientId === selectedPayment.clientId);
                         const totalDebt = clientPayments
-                          .filter(p => p.status === 'pending' || p.status === 'overdue')
+                          .filter(p => p.status === 'pending' || p.status === 'overdue' || p.status === 'partial')
                           .reduce((sum, p) => sum + p.amount, 0);
                         return totalDebt.toFixed(2);
                       })()}
@@ -692,17 +722,20 @@ const CollectorPayments = () => {
                   <div className="flex flex-wrap gap-1">
                     {(() => {
                       const clientPayments = payments.filter(p => p.clientId === selectedPayment.clientId);
-                      const owedPayments = clientPayments.filter(p => p.status === 'pending' || p.status === 'overdue');
+                      const owedPayments = clientPayments.filter(p => p.status === 'pending' || p.status === 'overdue' || p.status === 'partial');
                       return owedPayments.map(payment => (
                         <span
                           key={payment.id}
                           className={`inline-block px-2 py-1 text-xs rounded ${
                             payment.status === 'overdue'
                               ? 'bg-red-200 text-red-800'
-                              : 'bg-yellow-200 text-yellow-800'
+                              : payment.status === 'partial'
+                                ? 'bg-orange-200 text-orange-800'
+                                : 'bg-yellow-200 text-yellow-800'
                           }`}
                         >
                           {getMonthName(payment.month)}
+                          {payment.status === 'partial' && ' (Parcial)'}
                         </span>
                       ));
                     })()}

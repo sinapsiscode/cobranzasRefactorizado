@@ -49,7 +49,11 @@ const BackupManagement = () => {
 
   const handleGenerateBackup = async () => {
     try {
-      await generateBackup();
+      const backup = await generateBackup();
+      // Descargar automáticamente el backup en Excel
+      if (backup) {
+        handleDownloadBackup(backup.id);
+      }
     } catch (error) {
       console.error('Error generating backup:', error);
     }
@@ -153,7 +157,7 @@ const BackupManagement = () => {
             <Database className="h-8 w-8 text-blue-400" />
           </div>
         </div>
-        
+
         <div className="bg-white p-4 rounded-lg shadow border">
           <div className="flex items-center justify-between">
             <div>
@@ -163,7 +167,7 @@ const BackupManagement = () => {
             <HardDrive className="h-8 w-8 text-green-400" />
           </div>
         </div>
-        
+
         <div className="bg-white p-4 rounded-lg shadow border">
           <div className="flex items-center justify-between">
             <div>
@@ -175,7 +179,7 @@ const BackupManagement = () => {
             <Clock className="h-8 w-8 text-purple-400" />
           </div>
         </div>
-        
+
         <div className="bg-white p-4 rounded-lg shadow border">
           <div className="flex items-center justify-between">
             <div>
@@ -188,6 +192,43 @@ const BackupManagement = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Stats from Latest Backup */}
+      {stats.latestBackupInfo && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-blue-50 p-4 rounded-lg shadow border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-700">Total Clientes (Último Backup)</p>
+                <p className="text-2xl font-bold text-blue-900">{stats.latestBackupInfo.totalClients}</p>
+              </div>
+              <Database className="h-8 w-8 text-blue-400" />
+            </div>
+          </div>
+
+          <div className="bg-red-50 p-4 rounded-lg shadow border border-red-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-700">Clientes con Deuda</p>
+                <p className="text-2xl font-bold text-red-900">{stats.latestBackupInfo.clientsWithDebt}</p>
+                <p className="text-xs text-red-600">S/ {stats.latestBackupInfo.totalDebtAmount.toFixed(2)}</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-400" />
+            </div>
+          </div>
+
+          <div className="bg-green-50 p-4 rounded-lg shadow border border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-700">Clientes al Día</p>
+                <p className="text-2xl font-bold text-green-900">{stats.latestBackupInfo.clientsPaid}</p>
+                <p className="text-xs text-green-600">S/ {stats.latestBackupInfo.totalPaidAmount.toFixed(2)}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-400" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (
@@ -299,7 +340,13 @@ const BackupManagement = () => {
                     Tamaño
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tipo
+                    Clientes
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Con Deuda
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pagado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
@@ -337,9 +384,30 @@ const BackupManagement = () => {
                       {formatFileSize(backup.size)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {backup.type === 'full' ? 'Completo' : 'Parcial'}
-                      </span>
+                      <div className="text-sm font-medium text-gray-900">
+                        {backup.data?.metadata?.totalClients || backup.data?.metadata?.totalClients === 0 ? backup.data.metadata.totalClients : 'N/A'}
+                      </div>
+                      <div className="text-xs text-gray-500">Total</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-red-600">
+                        {backup.data?.metadata?.clientsWithDebt || backup.data?.metadata?.clientsWithDebt === 0 ? backup.data.metadata.clientsWithDebt : 'N/A'}
+                      </div>
+                      {backup.data?.metadata?.totalDebtAmount !== undefined && (
+                        <div className="text-xs text-gray-500">
+                          S/ {backup.data.metadata.totalDebtAmount.toFixed(2)}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-green-600">
+                        {backup.data?.metadata?.clientsPaid || backup.data?.metadata?.clientsPaid === 0 ? backup.data.metadata.clientsPaid : 'N/A'}
+                      </div>
+                      {backup.data?.metadata?.totalPaidAmount !== undefined && (
+                        <div className="text-xs text-gray-500">
+                          S/ {backup.data.metadata.totalPaidAmount.toFixed(2)}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -352,7 +420,7 @@ const BackupManagement = () => {
                         <button
                           onClick={() => handleDownloadBackup(backup.id)}
                           className="text-blue-600 hover:text-blue-900"
-                          title="Descargar"
+                          title="Descargar Excel"
                         >
                           <Download className="h-4 w-4" />
                         </button>

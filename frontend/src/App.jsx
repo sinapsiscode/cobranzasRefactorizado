@@ -23,7 +23,6 @@ import CashBoxManagement from './pages/admin/CashBoxManagement';
 import ServiceManagement from './pages/admin/ServiceManagement';
 import BackupManagement from './pages/admin/BackupManagement';
 import Reports from './pages/admin/Reports';
-import Settings from './pages/admin/Settings';
 import Analytics from './pages/admin/Analytics';
 import PaymentMethodSettings from './pages/admin/PaymentMethodSettings';
 
@@ -39,6 +38,9 @@ import CashBox from './pages/collector/CashBox';
 // Client Pages
 import ClientDashboard from './pages/client/Dashboard';
 import UploadVoucher from './pages/client/UploadVoucher';
+
+// Test Pages
+import TestMonthEnd from './pages/TestMonthEnd';
 
 // Common Components
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -74,16 +76,19 @@ function App() {
       <div className="App">
         <Routes>
           {/* Ruta de login */}
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
               isAuthenticated ? (
                 <Navigate to={getDefaultRoute(user?.role)} replace />
               ) : (
                 <Login />
               )
-            } 
+            }
           />
+
+          {/* Ruta de prueba de cierre de mes */}
+          <Route path="/test/month-end" element={<TestMonthEnd />} />
 
           {/* Rutas protegidas con Layout */}
           <Route 
@@ -269,29 +274,13 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                    <Route 
-                      path="/subadmin/reports" 
+                    <Route
+                      path="/subadmin/reports"
                       element={
                         <ProtectedRoute requiredRole="subadmin">
                           <Reports />
                         </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/settings" 
-                      element={
-                        <ProtectedRoute requiredRole={['admin', 'subadmin']}>
-                          <Settings />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/subadmin/settings" 
-                      element={
-                        <ProtectedRoute requiredRole="subadmin">
-                          <Settings />
-                        </ProtectedRoute>
-                      } 
+                      }
                     />
 
                     {/* Rutas de Cobrador */}

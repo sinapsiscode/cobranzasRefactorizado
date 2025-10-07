@@ -4,6 +4,7 @@ export const ExpenseSchema = {
   amount: { type: 'number', required: true, min: 0 },
   concept: { type: 'string', required: true, minLength: 3, maxLength: 100 },
   category: { type: 'enum', values: ['servicios', 'mantenimiento', 'sueldos', 'oficina', 'marketing', 'otros'], required: true },
+  serviceType: { type: 'enum', values: ['internet', 'cable', 'duo', 'general'], required: true }, // Tipo de servicio al que corresponde el gasto
   description: { type: 'string', required: false, maxLength: 500 },
   expenseDate: { type: 'date', required: true },
   registeredBy: { type: 'string', required: true }, // ID del usuario que registró el gasto
@@ -19,6 +20,7 @@ export const ExpenseSchema = {
 // Valores por defecto
 export const ExpenseDefaults = {
   category: 'otros',
+  serviceType: 'general',
   paymentMethod: 'efectivo',
   status: 'pagado',
   isRecurring: false,
@@ -33,6 +35,14 @@ export const ExpenseCategories = {
   oficina: 'Gastos de Oficina',
   marketing: 'Marketing y Publicidad',
   otros: 'Otros Gastos'
+};
+
+// Tipos de servicio con etiquetas
+export const ServiceTypes = {
+  internet: 'Internet',
+  cable: 'Cable/TV',
+  duo: 'Dúo (Internet + Cable)',
+  general: 'General (Ambos servicios)'
 };
 
 // Métodos de pago con etiquetas
@@ -66,6 +76,10 @@ export const validateExpense = (data) => {
     errors.category = 'Categoría inválida';
   }
 
+  if (!data.serviceType || !Object.keys(ServiceTypes).includes(data.serviceType)) {
+    errors.serviceType = 'Tipo de servicio inválido';
+  }
+
   if (!data.expenseDate) {
     errors.expenseDate = 'Fecha de gasto es obligatoria';
   }
@@ -84,6 +98,11 @@ export const validateExpense = (data) => {
 // Función helper para obtener etiqueta de categoría
 export const getCategoryLabel = (category) => {
   return ExpenseCategories[category] || category;
+};
+
+// Función helper para obtener etiqueta de tipo de servicio
+export const getServiceTypeLabel = (serviceType) => {
+  return ServiceTypes[serviceType] || serviceType;
 };
 
 // Función helper para obtener etiqueta de método de pago

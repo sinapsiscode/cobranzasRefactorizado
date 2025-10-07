@@ -5,11 +5,11 @@ import { useClientStore } from '../../stores/clientStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/authStore';
-import { 
-  DollarSign, 
-  Users, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  DollarSign,
+  Users,
+  AlertTriangle,
+  CheckCircle,
   TrendingUp,
   Plus,
   FileText,
@@ -17,7 +17,10 @@ import {
   Eye,
   Upload,
   Database,
-  Download
+  Download,
+  Calendar,
+  RefreshCw,
+  Zap
 } from 'lucide-react';
 import StatCard from '../../components/common/StatCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -43,6 +46,11 @@ import {
   Legend
 } from 'recharts';
 import PaymentRegistrationModal from '../../components/common/PaymentRegistrationModal';
+import {
+  getPaymentServiceStats,
+  runManualPaymentCheck,
+  forceMonthEndClosure
+} from '../../services/automation/paymentStatusService';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -68,6 +76,10 @@ const AdminDashboard = () => {
   const [exporting, setExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // Estados para panel de automatización
+  const [automationStats, setAutomationStats] = useState(null);
+  const [runningAutomation, setRunningAutomation] = useState(false);
   
   // Función para filtrar datos de los últimos 3 meses
   const filterLastThreeMonths = (data) => {
@@ -206,6 +218,59 @@ const AdminDashboard = () => {
       }
     }
   };
+
+  // Cargar estadísticas del servicio de automatización
+  const loadAutomationStats = () => {
+    try {
+      const stats = getPaymentServiceStats();
+      setAutomationStats(stats);
+    } catch (error) {
+      console.error('Error loading automation stats:', error);
+    }
+  };
+
+  // Ejecutar verificación manual de pagos
+  const handleRunManualCheck = async () => {
+    if (window.confirm('¿Ejecutar verificación manual de estados de pagos?')) {
+      setRunningAutomation(true);
+      try {
+        await runManualPaymentCheck();
+        loadAutomationStats();
+        await fetchPayments();
+        success('Verificación manual ejecutada exitosamente');
+      } catch (error) {
+        console.error('Error:', error);
+        showError('Error al ejecutar verificación manual');
+      } finally {
+        setRunningAutomation(false);
+      }
+    }
+  };
+
+  // Forzar cierre de mes
+  const handleForceMonthEndClosure = async () => {
+    if (window.confirm('⚠️ ¿Forzar cierre de mes? Esto actualizará todos los pagos pendientes del mes actual a estado "Mora".\n\nEsta acción normalmente se ejecuta automáticamente el último día del mes.')) {
+      setRunningAutomation(true);
+      try {
+        const result = await forceMonthEndClosure();
+        loadAutomationStats();
+        await fetchPayments();
+        success(`Cierre de mes completado: ${result.moraCount} pagos marcados como Mora, ${result.canceladoCount} pagos cancelados`);
+      } catch (error) {
+        console.error('Error:', error);
+        showError('Error al ejecutar cierre de mes');
+      } finally {
+        setRunningAutomation(false);
+      }
+    }
+  };
+
+  // Cargar stats al montar el componente
+  useEffect(() => {
+    loadAutomationStats();
+    const interval = setInterval(loadAutomationStats, 60000); // Actualizar cada minuto
+    return () => clearInterval(interval);
+  }, []);
 
   // Exportar dashboard a Excel
   const handleExportToExcel = async () => {
@@ -629,6 +694,96 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Panel de Automatización de Pagos */}
+      {user?.role === 'superadmin' && automationStats && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Zap className="h-6 w-6 text-yellow-500 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900">Automatización de Pagos</h2>
+            </div>
+            <div className="flex items-center">
+              {automationStats.isRunning ? (
+                <span className="flex items-center text-sm text-green-600">
+                  <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-2"></div>
+                  Activo
+                </span>
+              ) : (
+                <span className="flex items-center text-sm text-gray-500">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
+                  Inactivo
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-blue-700">Mes Actual</span>
+                <Calendar className="h-4 w-4 text-blue-600" />
+              </div>
+              <p className="text-lg font-bold text-blue-900">{automationStats.currentMonth}</p>
+            </div>
+
+            <div className={`rounded-lg p-4 ${
+              automationStats.isLastDayOfMonth ? 'bg-red-50' : 'bg-gray-50'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-700">Último Día del Mes</span>
+                <AlertTriangle className={`h-4 w-4 ${
+                  automationStats.isLastDayOfMonth ? 'text-red-600' : 'text-gray-400'
+                }`} />
+              </div>
+              <p className={`text-lg font-bold ${
+                automationStats.isLastDayOfMonth ? 'text-red-900' : 'text-gray-900'
+              }`}>
+                {automationStats.isLastDayOfMonth ? 'SÍ - Cierre programado' : 'No'}
+              </p>
+            </div>
+
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-purple-700">Última Verificación</span>
+                <RefreshCw className="h-4 w-4 text-purple-600" />
+              </div>
+              <p className="text-sm font-medium text-purple-900">
+                {automationStats.lastCheck
+                  ? new Date(automationStats.lastCheck).toLocaleString('es-ES')
+                  : 'Nunca'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleRunManualCheck}
+              disabled={runningAutomation}
+              className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${runningAutomation ? 'animate-spin' : ''}`} />
+              {runningAutomation ? 'Ejecutando...' : 'Verificación Manual'}
+            </button>
+
+            <button
+              onClick={handleForceMonthEndClosure}
+              disabled={runningAutomation}
+              className="flex-1 flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Forzar Cierre de Mes
+            </button>
+          </div>
+
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-xs text-yellow-800">
+              <strong>Información:</strong> El sistema verifica automáticamente cada 6 horas si hay pagos vencidos.
+              El último día de cada mes, se ejecuta el cierre automático marcando pagos pendientes como "Mora".
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Modal de registro de pagos */}
       <PaymentRegistrationModal

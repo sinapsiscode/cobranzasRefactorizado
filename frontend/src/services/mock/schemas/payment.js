@@ -11,11 +11,15 @@ export const PaymentSchema = {
   paymentMethod: { type: 'enum', values: ['cash', 'transfer', 'deposit', 'voucher'], required: false },
   voucherUrl: { type: 'string', required: false },
   comments: { type: 'string', required: false, maxLength: 500 },
-  
+
   // Campos de validación
   validatedBy: { type: 'string', required: false }, // ID del SubAdmin/Admin que validó
   validatedDate: { type: 'date', required: false }, // Fecha de validación
   validationComments: { type: 'string', required: false, maxLength: 500 }, // Comentarios de validación
+
+  // Campo para indicar si es un pago adelantado
+  isAdvancePayment: { type: 'boolean', required: false, default: false }, // Indica si el pago es adelantado
+
   month: { type: 'string', required: true, pattern: /^\d{4}-\d{2}$/ }, // YYYY-MM
   year: { type: 'number', required: true },
   createdAt: { type: 'date', default: () => new Date() },

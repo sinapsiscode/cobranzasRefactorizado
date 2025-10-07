@@ -24,7 +24,7 @@ const shouldSimulateError = () => {
 };
 
 // Generar respuesta de error
-const generateError = (status = 500, message = 'Error interno del servidor') => {
+const generateError = (status = 500, message = 'Error interno del servidor', validationErrors = null) => {
   const errors = [
     { status: 400, message: 'Solicitud incorrecta' },
     { status: 404, message: 'Recurso no encontrado' },
@@ -32,15 +32,22 @@ const generateError = (status = 500, message = 'Error interno del servidor') => 
     { status: 500, message: 'Error interno del servidor' },
     { status: 503, message: 'Servicio no disponible temporalmente' }
   ];
-  
+
   const error = Math.random() < 0.5 ? { status, message } : errors[Math.floor(Math.random() * errors.length)];
-  
-  return {
+
+  const errorResponse = {
     success: false,
     error: error.message,
     status: error.status,
     timestamp: new Date().toISOString()
   };
+
+  // Agregar errores de validación si existen
+  if (validationErrors) {
+    errorResponse.errors = validationErrors;
+  }
+
+  return errorResponse;
 };
 
 // Generar respuesta exitosa
