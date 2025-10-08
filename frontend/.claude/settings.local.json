@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//c/Users/usu/Documents/Cobranzas---Gabriel/**)"
-    ],
-    "deny": [],
-    "ask": []
-  }
-}
