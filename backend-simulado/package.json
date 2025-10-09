@@ -1,0 +1,29 @@
+{
+  "name": "tv-cable-backend-simulado",
+  "version": "1.0.0",
+  "description": "Backend simulado con JSON Server para TV Cable Cobranzas",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "generate": "node utils/generateDb.js",
+    "seed": "node utils/generateDb.js && node server.js"
+  },
+  "keywords": [
+    "json-server",
+    "mock-api",
+    "backend",
+    "rest-api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "json-server": "^1.0.0-beta.3",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
