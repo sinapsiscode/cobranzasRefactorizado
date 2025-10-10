@@ -29788,13 +29788,7 @@
     "enableNotifications": true,
     "enableEmailNotifications": false,
     "autoSuspendAfterDays": 30,
-    "updatedAt": "2025-10-09T17:42:41.358Z",
-    "basePrices": {
-      "internet": 50,
-      "cable": 40,
-      "duo": 80
-    },
-    "neighborhoods": []
+    "updatedAt": "2025-10-09T17:42:41.358Z"
   },
   "clientExtended": [],
   "receipts": [],

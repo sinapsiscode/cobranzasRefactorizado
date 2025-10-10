@@ -1,6 +1,8 @@
 // Store de vouchers - subida, validación, gestión
 import { create } from 'zustand';
 
+const API_URL = '/api';
+
 export const useVoucherStore = create((set, get) => ({
   // Estado
   vouchers: [],
@@ -37,12 +39,11 @@ export const useVoucherStore = create((set, get) => ({
 
       // Convertir archivo a base64
       const fileData = await get().fileToBase64(file);
-      
+
       set({ uploadProgress: 70 });
 
       // Crear voucher
       const newVoucher = {
-        id: `voucher-${Date.now()}`,
         clientId,
         operationNumber,
         fileName: file.name,
@@ -60,24 +61,36 @@ export const useVoucherStore = create((set, get) => ({
         comments: comments || ''
       };
 
-      // Guardar en localStorage
-      const existingVouchers = JSON.parse(localStorage.getItem('tv-cable:vouchers') || '[]');
-      const updatedVouchers = [...existingVouchers, newVoucher];
-      localStorage.setItem('tv-cable:vouchers', JSON.stringify(updatedVouchers));
-
-      set({ 
-        vouchers: updatedVouchers,
-        loading: false, 
-        uploadProgress: 100,
-        error: null 
+      // Enviar al backend
+      const response = await fetch(`${API_URL}/vouchers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newVoucher)
       });
 
-      return newVoucher;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al subir el voucher');
+      }
+
+      const savedVoucher = await response.json();
+
+      // Actualizar estado local
+      set(state => ({
+        vouchers: [...state.vouchers, savedVoucher],
+        loading: false,
+        uploadProgress: 100,
+        error: null
+      }));
+
+      return savedVoucher;
     } catch (error) {
-      set({ 
-        loading: false, 
+      set({
+        loading: false,
         error: error.message,
-        uploadProgress: 0 
+        uploadProgress: 0
       });
       throw error;
     }
@@ -85,8 +98,19 @@ export const useVoucherStore = create((set, get) => ({
 
   // Verificar si número de operación ya existe
   checkOperationNumber: async (operationNumber) => {
-    const vouchers = JSON.parse(localStorage.getItem('tv-cable:vouchers') || '[]');
-    return vouchers.find(v => v.operationNumber === operationNumber.toString()) || null;
+    try {
+      const response = await fetch(`${API_URL}/vouchers/check-operation/${operationNumber}`);
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      return data.exists ? data.voucher : null;
+    } catch (error) {
+      console.error('Error checking operation number:', error);
+      return null;
+    }
   },
 
   // Convertir archivo a base64
@@ -102,43 +126,58 @@ export const useVoucherStore = create((set, get) => ({
   // Cargar vouchers del cliente actual
   fetchClientVouchers: async (clientId) => {
     set({ loading: true, error: null });
-    
+
     try {
-      const allVouchers = JSON.parse(localStorage.getItem('tv-cable:vouchers') || '[]');
-      const clientVouchers = allVouchers.filter(v => v.clientId === clientId);
-      
-      set({ 
+      const response = await fetch(`${API_URL}/vouchers?clientId=${clientId}`);
+
+      if (!response.ok) {
+        throw new Error('Error al cargar los vouchers del cliente');
+      }
+
+      const clientVouchers = await response.json();
+
+      set({
         vouchers: clientVouchers,
-        loading: false 
+        loading: false
       });
-      
+
       return clientVouchers;
     } catch (error) {
-      set({ 
-        loading: false, 
-        error: error.message 
+      set({
+        loading: false,
+        error: error.message
       });
       throw error;
     }
   },
 
   // Cargar todos los vouchers (para admin/cobrador)
-  fetchAllVouchers: async () => {
+  fetchAllVouchers: async (status = null) => {
     set({ loading: true, error: null });
-    
+
     try {
-      const allVouchers = JSON.parse(localStorage.getItem('tv-cable:vouchers') || '[]');
-      
-      set({ 
+      const url = status
+        ? `${API_URL}/vouchers?status=${status}`
+        : `${API_URL}/vouchers`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error('Error al cargar los vouchers');
+      }
+
+      const allVouchers = await response.json();
+
+      set({
         vouchers: allVouchers,
-        loading: false 
+        loading: false
       });
-      
+
       return allVouchers;
     } catch (error) {
-      set({ 
-        loading: false, 
-        error: error.message 
+      set({
+        loading: false,
+        error: error.message
       });
       throw error;
     }
@@ -149,35 +188,38 @@ export const useVoucherStore = create((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const allVouchers = JSON.parse(localStorage.getItem('tv-cable:vouchers') || '[]');
-      const voucherIndex = allVouchers.findIndex(v => v.id === voucherId);
-      
-      if (voucherIndex === -1) {
-        throw new Error('Voucher no encontrado');
-      }
-
-      // Actualizar voucher
-      allVouchers[voucherIndex] = {
-        ...allVouchers[voucherIndex],
-        status, // 'approved' o 'rejected'
-        reviewedBy,
-        reviewDate: new Date().toISOString(),
-        reviewComments: comments
-      };
-
-      // Guardar cambios
-      localStorage.setItem('tv-cable:vouchers', JSON.stringify(allVouchers));
-      
-      set({ 
-        vouchers: allVouchers,
-        loading: false 
+      const response = await fetch(`${API_URL}/vouchers/${voucherId}/review`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status,
+          reviewedBy,
+          reviewComments: comments
+        })
       });
 
-      return allVouchers[voucherIndex];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al revisar el voucher');
+      }
+
+      const updatedVoucher = await response.json();
+
+      // Actualizar estado local
+      set(state => ({
+        vouchers: state.vouchers.map(v =>
+          v.id === voucherId ? updatedVoucher : v
+        ),
+        loading: false
+      }));
+
+      return updatedVoucher;
     } catch (error) {
-      set({ 
-        loading: false, 
-        error: error.message 
+      set({
+        loading: false,
+        error: error.message
       });
       throw error;
     }
@@ -186,13 +228,20 @@ export const useVoucherStore = create((set, get) => ({
   // Eliminar voucher
   deleteVoucher: async (voucherId) => {
     try {
-      const allVouchers = JSON.parse(localStorage.getItem('tv-cable:vouchers') || '[]');
-      const filteredVouchers = allVouchers.filter(v => v.id !== voucherId);
-      
-      localStorage.setItem('tv-cable:vouchers', JSON.stringify(filteredVouchers));
-      
-      set({ vouchers: filteredVouchers });
-      
+      const response = await fetch(`${API_URL}/vouchers/${voucherId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al eliminar el voucher');
+      }
+
+      // Actualizar estado local
+      set(state => ({
+        vouchers: state.vouchers.filter(v => v.id !== voucherId)
+      }));
+
       return true;
     } catch (error) {
       set({ error: error.message });
@@ -204,22 +253,22 @@ export const useVoucherStore = create((set, get) => ({
   validateOperationNumber: (operationNumber) => {
     // Validar que sea numérico y tenga longitud adecuada
     const cleanNumber = operationNumber.toString().replace(/\D/g, '');
-    
+
     if (cleanNumber.length < 6) {
       return { valid: false, message: 'El número de operación debe tener al menos 6 dígitos' };
     }
-    
+
     if (cleanNumber.length > 20) {
       return { valid: false, message: 'El número de operación no puede tener más de 20 dígitos' };
     }
-    
+
     return { valid: true, message: '' };
   },
 
   // Obtener estadísticas de vouchers
   getVoucherStats: () => {
     const { vouchers } = get();
-    
+
     return {
       total: vouchers.length,
       pending: vouchers.filter(v => v.status === 'pending').length,
@@ -230,9 +279,9 @@ export const useVoucherStore = create((set, get) => ({
 
   // Utilidades
   clearError: () => set({ error: null }),
-  
+
   clearProgress: () => set({ uploadProgress: 0 }),
-  
+
   isLoading: () => get().loading,
 
   // Obtener vouchers por estado

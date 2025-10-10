@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { db } from '../../services/mock/db';
+// MIGRADO A JSON SERVER - import eliminado
 
 const CollectorManagement = () => {
   const { success, error: showError, info } = useNotificationStore();

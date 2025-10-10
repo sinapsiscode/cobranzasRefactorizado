@@ -24,7 +24,7 @@ import {
   getCategoryColor,
   getServiceStatusLabel,
   getServiceStatusColor
-} from '../../services/mock/schemas/service';
+} from '../../schemas/service';
 
 const ServiceManagement = () => {
   const { user } = useAuthStore();

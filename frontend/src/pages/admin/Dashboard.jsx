@@ -25,7 +25,7 @@ import {
 import StatCard from '../../components/common/StatCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import { loadSimulationData } from '../../services/mock/seeder';
+// MIGRADO A JSON SERVER - import eliminado
 import { 
   exportDashboardToExcel, 
   exportClientsToExcel, 

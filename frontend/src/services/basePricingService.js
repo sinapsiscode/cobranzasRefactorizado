@@ -1,10 +1,9 @@
 /**
  * Servicio centralizado para manejo de precios base de servicios
- * Integra los precios configurados en Administrador > Servicios con todo el sistema
+ * MIGRADO A JSON SERVER - Usa API backend en lugar de localStorage
  */
 
-// Clave para localStorage
-const STORAGE_KEY = 'tv-cable:service-prices';
+const API_URL = '/api';
 
 // Precios por defecto (fallback si no hay configuración)
 const DEFAULT_BASE_PRICES = {
@@ -12,6 +11,11 @@ const DEFAULT_BASE_PRICES = {
   cable: 40,
   duo: 80
 };
+
+// Cache en memoria para reducir llamadas a API
+let pricesCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 // Multiplicadores por categoría de plan
 const PLAN_MULTIPLIERS = {
@@ -24,51 +28,82 @@ const PLAN_MULTIPLIERS = {
 };
 
 /**
- * Obtiene los precios base configurados desde localStorage
- * @returns {Object} Precios base para internet, cable y dúo
+ * Obtiene los precios base configurados desde el backend
+ * @returns {Promise<Object>} Precios base para internet, cable y dúo
  */
-export const getBasePrices = () => {
+export const getBasePrices = async () => {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const prices = JSON.parse(saved);
-      // Validar que los precios sean números válidos
-      const validPrices = {
-        internet: parseFloat(prices.internet) || DEFAULT_BASE_PRICES.internet,
-        cable: parseFloat(prices.cable) || DEFAULT_BASE_PRICES.cable,
-        duo: parseFloat(prices.duo) || DEFAULT_BASE_PRICES.duo
-      };
-      return validPrices;
+    // Usar cache si está disponible y es reciente
+    if (pricesCache && cacheTimestamp && (Date.now() - cacheTimestamp) < CACHE_DURATION) {
+      return pricesCache;
     }
+
+    const response = await fetch(`${API_URL}/settings`);
+    if (!response.ok) {
+      throw new Error('Error al obtener configuración');
+    }
+
+    const settings = await response.json();
+    const prices = settings.basePrices || DEFAULT_BASE_PRICES;
+
+    // Validar que los precios sean números válidos
+    const validPrices = {
+      internet: parseFloat(prices.internet) || DEFAULT_BASE_PRICES.internet,
+      cable: parseFloat(prices.cable) || DEFAULT_BASE_PRICES.cable,
+      duo: parseFloat(prices.duo) || DEFAULT_BASE_PRICES.duo
+    };
+
+    // Actualizar cache
+    pricesCache = validPrices;
+    cacheTimestamp = Date.now();
+
+    return validPrices;
   } catch (error) {
-    console.error('Error loading base prices from localStorage:', error);
+    console.error('Error loading base prices from API:', error);
+    // Retornar cache si existe, sino defaults
+    return pricesCache || { ...DEFAULT_BASE_PRICES };
   }
-  
-  // Retornar precios por defecto si no hay configuración o hay error
-  return { ...DEFAULT_BASE_PRICES };
 };
 
 /**
- * Guarda los precios base en localStorage
+ * Guarda los precios base en el backend
  * @param {Object} prices - Precios a guardar {internet, cable, duo}
+ * @returns {Promise<boolean>} true si se guardó correctamente
  */
-export const saveBasePrices = (prices) => {
+export const saveBasePrices = async (prices) => {
   try {
     const validPrices = {
       internet: parseFloat(prices.internet) || 0,
       cable: parseFloat(prices.cable) || 0,
       duo: parseFloat(prices.duo) || 0
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(validPrices));
-    
+
+    const response = await fetch(`${API_URL}/settings`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        basePrices: validPrices
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al guardar precios');
+    }
+
+    // Actualizar cache
+    pricesCache = validPrices;
+    cacheTimestamp = Date.now();
+
     // Disparar evento para notificar cambios a otros componentes
     window.dispatchEvent(new CustomEvent('basePricesUpdated', {
       detail: validPrices
     }));
-    
+
     return true;
   } catch (error) {
-    console.error('Error saving base prices to localStorage:', error);
+    console.error('Error saving base prices to API:', error);
     return false;
   }
 };
@@ -77,53 +112,53 @@ export const saveBasePrices = (prices) => {
  * Calcula el precio final según el tipo de servicio y categoría de plan
  * @param {string} serviceType - 'internet', 'cable', 'duo'
  * @param {string} planCategory - 'basic', 'standard', 'premium'
- * @returns {number} Precio calculado
+ * @returns {Promise<number>} Precio calculado
  */
-export const calculateServicePrice = (serviceType, planCategory = 'standard') => {
-  const basePrices = getBasePrices();
+export const calculateServicePrice = async (serviceType, planCategory = 'standard') => {
+  const basePrices = await getBasePrices();
   const basePrice = basePrices[serviceType] || 0;
   const multiplier = PLAN_MULTIPLIERS[planCategory] || PLAN_MULTIPLIERS.standard;
-  
+
   return Math.round(basePrice * multiplier);
 };
 
 /**
  * Obtiene la matriz completa de precios por plan y servicio
- * @returns {Object} Matriz de precios organizados por plan
+ * @returns {Promise<Object>} Matriz de precios organizados por plan
  */
-export const getPriceMatrix = () => {
-  const basePrices = getBasePrices();
+export const getPriceMatrix = async () => {
+  const basePrices = await getBasePrices();
 
   return {
     basic: {
-      internet: calculateServicePrice('internet', 'basic'),
-      cable: calculateServicePrice('cable', 'basic'),
-      duo: calculateServicePrice('duo', 'basic')
+      internet: await calculateServicePrice('internet', 'basic'),
+      cable: await calculateServicePrice('cable', 'basic'),
+      duo: await calculateServicePrice('duo', 'basic')
     },
     standard: {
-      internet: calculateServicePrice('internet', 'standard'),
-      cable: calculateServicePrice('cable', 'standard'),
-      duo: calculateServicePrice('duo', 'standard')
+      internet: await calculateServicePrice('internet', 'standard'),
+      cable: await calculateServicePrice('cable', 'standard'),
+      duo: await calculateServicePrice('duo', 'standard')
     },
     premium: {
-      internet: calculateServicePrice('internet', 'premium'),
-      cable: calculateServicePrice('cable', 'premium'),
-      duo: calculateServicePrice('duo', 'premium')
+      internet: await calculateServicePrice('internet', 'premium'),
+      cable: await calculateServicePrice('cable', 'premium'),
+      duo: await calculateServicePrice('duo', 'premium')
     },
     plan_hogar: {
-      internet: calculateServicePrice('internet', 'plan_hogar'),
-      cable: calculateServicePrice('cable', 'plan_hogar'),
-      duo: calculateServicePrice('duo', 'plan_hogar')
+      internet: await calculateServicePrice('internet', 'plan_hogar'),
+      cable: await calculateServicePrice('cable', 'plan_hogar'),
+      duo: await calculateServicePrice('duo', 'plan_hogar')
     },
     plan_corporativo: {
-      internet: calculateServicePrice('internet', 'plan_corporativo'),
-      cable: calculateServicePrice('cable', 'plan_corporativo'),
-      duo: calculateServicePrice('duo', 'plan_corporativo')
+      internet: await calculateServicePrice('internet', 'plan_corporativo'),
+      cable: await calculateServicePrice('cable', 'plan_corporativo'),
+      duo: await calculateServicePrice('duo', 'plan_corporativo')
     },
     plan_negocio: {
-      internet: calculateServicePrice('internet', 'plan_negocio'),
-      cable: calculateServicePrice('cable', 'plan_negocio'),
-      duo: calculateServicePrice('duo', 'plan_negocio')
+      internet: await calculateServicePrice('internet', 'plan_negocio'),
+      cable: await calculateServicePrice('cable', 'plan_negocio'),
+      duo: await calculateServicePrice('duo', 'plan_negocio')
     }
   };
 };
@@ -133,22 +168,34 @@ export const getPriceMatrix = () => {
  * @returns {Object} Precios base y función para actualizarlos
  */
 export const useBasePrices = () => {
-  const [prices, setPrices] = React.useState(getBasePrices());
+  const [prices, setPrices] = React.useState(DEFAULT_BASE_PRICES);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
+    // Cargar precios al montar
+    const loadPrices = async () => {
+      setIsLoading(true);
+      const fetchedPrices = await getBasePrices();
+      setPrices(fetchedPrices);
+      setIsLoading(false);
+    };
+    loadPrices();
+
+    // Escuchar cambios
     const handlePricesUpdated = (event) => {
       setPrices(event.detail);
     };
 
     window.addEventListener('basePricesUpdated', handlePricesUpdated);
-    
+
     return () => {
       window.removeEventListener('basePricesUpdated', handlePricesUpdated);
     };
   }, []);
 
-  const updatePrices = (newPrices) => {
-    if (saveBasePrices(newPrices)) {
+  const updatePrices = async (newPrices) => {
+    const success = await saveBasePrices(newPrices);
+    if (success) {
       setPrices(newPrices);
       return true;
     }
@@ -157,9 +204,10 @@ export const useBasePrices = () => {
 
   return {
     basePrices: prices,
+    isLoading,
     updateBasePrices: updatePrices,
     calculatePrice: calculateServicePrice,
-    priceMatrix: getPriceMatrix()
+    getPriceMatrix
   };
 };
 
@@ -178,11 +226,12 @@ export const formatPrice = (price, includeCurrency = true) => {
  * Obtiene información de un servicio incluyendo precio calculado
  * @param {string} serviceType - Tipo de servicio
  * @param {string} planCategory - Categoría del plan
- * @returns {Object} Información completa del servicio
+ * @returns {Promise<Object>} Información completa del servicio
  */
-export const getServiceInfo = (serviceType, planCategory = 'standard') => {
-  const price = calculateServicePrice(serviceType, planCategory);
-  
+export const getServiceInfo = async (serviceType, planCategory = 'standard') => {
+  const price = await calculateServicePrice(serviceType, planCategory);
+  const basePrices = await getBasePrices();
+
   const serviceLabels = {
     internet: 'INTERNET',
     cable: 'TV',
@@ -205,10 +254,10 @@ export const getServiceInfo = (serviceType, planCategory = 'standard') => {
     planName: planLabels[planCategory] || planCategory,
     price,
     formattedPrice: formatPrice(price),
-    basePrice: getBasePrices()[serviceType] || 0,
+    basePrice: basePrices[serviceType] || 0,
     multiplier: PLAN_MULTIPLIERS[planCategory] || 1.0
   };
 };
 
 // Exportar constantes para uso externo
-export { DEFAULT_BASE_PRICES, PLAN_MULTIPLIERS, STORAGE_KEY };
+export { DEFAULT_BASE_PRICES, PLAN_MULTIPLIERS };

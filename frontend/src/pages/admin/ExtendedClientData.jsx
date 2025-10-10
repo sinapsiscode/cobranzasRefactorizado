@@ -14,7 +14,7 @@ import {
   Filter
 } from 'lucide-react';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { getTarifaLabel, getTarifaColor } from '../../services/mock/schemas/clientExtended';
+import { getTarifaLabel, getTarifaColor } from '../../schemas/clientExtended';
 
 const ExtendedClientData = () => {
   const { clients, fetchClients } = useClientStore();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../services/mock/db';
+// MIGRADO A JSON SERVER - import eliminado
 import { forceMonthEndClosure, getPaymentServiceStats } from '../services/automation/paymentStatusService';
 import { Play, RefreshCw, CheckCircle } from 'lucide-react';
 

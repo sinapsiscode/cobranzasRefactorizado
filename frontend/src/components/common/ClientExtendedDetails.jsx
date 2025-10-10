@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, DollarSign, User, MapPin, Calendar, FileText, Tag, Clock, MessageCircle, ChevronDown, ChevronUp, Phone, Mail } from 'lucide-react';
-import { getTarifaLabel, getTarifaColor } from '../../services/mock/schemas/clientExtended';
+import { getTarifaLabel, getTarifaColor } from '../../schemas/clientExtended';
 
 const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) => {
   if (!client) return null;

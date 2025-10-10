@@ -1,7 +1,8 @@
 // Store de autenticación - manejo de usuario actual, token, login/logout
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { mockServer } from '../services/mock/server.js';
+
+const API_URL = '/api';
 
 export const useAuthStore = create(
   persist(
@@ -17,13 +18,27 @@ export const useAuthStore = create(
       // Acciones
       login: async (credentials) => {
         set({ loading: true, error: null });
-        
+
         try {
-          const response = await mockServer.login(credentials);
-          const { user, token, expiresIn } = response.data;
-          
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(credentials),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error de conexión');
+          }
+
+          const { user, token } = await response.json();
+
+          // Calcular expiración de sesión (24 horas por defecto)
+          const expiresIn = 24 * 60 * 60 * 1000; // 24 horas en ms
           const sessionExpiry = new Date(Date.now() + expiresIn);
-          
+
           set({
             user,
             token,
@@ -32,28 +47,34 @@ export const useAuthStore = create(
             error: null,
             sessionExpiry: sessionExpiry.toISOString()
           });
-          
+
           return { success: true, user };
         } catch (error) {
-          set({ 
-            loading: false, 
-            error: error.error || 'Error de conexión',
+          set({
+            loading: false,
+            error: error.message || 'Error de conexión',
             user: null,
             token: null,
             isAuthenticated: false
           });
-          
+
           throw error;
         }
       },
 
       logout: async () => {
         set({ loading: true });
-        
+
         try {
           const { token } = get();
           if (token) {
-            await mockServer.logout(token);
+            await fetch(`${API_URL}/auth/logout`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+            });
           }
         } catch (error) {
           // Ignorar errores de logout
@@ -72,30 +93,41 @@ export const useAuthStore = create(
 
       validateToken: async () => {
         const { token, sessionExpiry } = get();
-        
+
         if (!token) {
           return false;
         }
-        
+
         // Verificar expiración local
         if (sessionExpiry && new Date(sessionExpiry) <= new Date()) {
           get().logout();
           return false;
         }
-        
+
         set({ loading: true });
-        
+
         try {
-          const response = await mockServer.validateToken(token);
-          const { user } = response.data;
-          
+          const response = await fetch(`${API_URL}/auth/verify`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Token inválido');
+          }
+
+          const { user } = await response.json();
+
           set({
             user,
             isAuthenticated: true,
             loading: false,
             error: null
           });
-          
+
           return true;
         } catch (error) {
           set({
@@ -106,7 +138,7 @@ export const useAuthStore = create(
             error: null,
             sessionExpiry: null
           });
-          
+
           return false;
         }
       },
@@ -144,21 +176,21 @@ export const useAuthStore = create(
 
       isSessionValid: () => {
         const { token, sessionExpiry } = get();
-        
+
         if (!token || !sessionExpiry) {
           return false;
         }
-        
+
         return new Date(sessionExpiry) > new Date();
       },
 
       getRemainingSessionTime: () => {
         const { sessionExpiry } = get();
-        
+
         if (!sessionExpiry) {
           return 0;
         }
-        
+
         const remaining = new Date(sessionExpiry) - new Date();
         return Math.max(0, remaining);
       }

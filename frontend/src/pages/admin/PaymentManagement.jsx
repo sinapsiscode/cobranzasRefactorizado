@@ -42,7 +42,7 @@ import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import PaymentRegistrationModal from '../../components/common/PaymentRegistrationModal';
 import { generatePaymentReceipt } from '../../services/reports/pdfGenerator';
-import { db } from '../../services/mock/db';
+// MIGRADO A JSON SERVER - import eliminado
 
 const PaymentManagement = () => {
   const { 

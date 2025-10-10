@@ -16,7 +16,7 @@ import {
 import { useClientStore } from '../../stores/clientStore';
 import { useServiceStore } from '../../stores/serviceStore';
 import { useAuthStore } from '../../stores/authStore';
-import { db } from '../../services/mock/db';
+// MIGRADO A JSON SERVER - import eliminado
 
 const UserManagement = () => {
   const { user } = useAuthStore();

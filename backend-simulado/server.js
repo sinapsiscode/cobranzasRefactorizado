@@ -12,7 +12,7 @@ const middlewares = jsonServer.defaults({
   static: join(__dirname, 'public')
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = 8231;
 
 // Middleware de logging
 server.use(morgan('dev'));
@@ -549,6 +549,563 @@ server.get('/api/stats/collector/:collectorId', (req, res) => {
   };
 
   res.json(stats);
+});
+
+// ============================================
+// ENDPOINTS DE CLIENT EXTENDED DATA
+// ============================================
+
+// Obtener todos los datos extendidos o por clientId
+server.get('/api/client-extended', (req, res) => {
+  const { clientId } = req.query;
+  const db = router.db;
+
+  let extendedData = db.get('clientExtended').value() || [];
+
+  // Filtrar por clientId si se proporciona
+  if (clientId) {
+    const data = extendedData.find(d => d.clientId === clientId);
+    return res.json(data || null);
+  }
+
+  res.json(extendedData);
+});
+
+// Crear/actualizar datos extendidos de un cliente
+server.post('/api/client-extended', (req, res) => {
+  const { clientId } = req.body;
+  const db = router.db;
+
+  if (!clientId) {
+    return res.status(400).json({ error: 'clientId es requerido' });
+  }
+
+  // Verificar si ya existe
+  const existing = db.get('clientExtended').find({ clientId }).value();
+
+  if (existing) {
+    // Actualizar existente
+    const updated = db.get('clientExtended')
+      .find({ clientId })
+      .assign({
+        ...req.body,
+        lastModified: new Date().toISOString()
+      })
+      .write();
+
+    return res.json(updated);
+  }
+
+  // Crear nuevo
+  const newData = {
+    id: `ext-${Date.now()}-${clientId}`,
+    ...req.body,
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString()
+  };
+
+  db.get('clientExtended').push(newData).write();
+
+  res.status(201).json(newData);
+});
+
+// Actualizar datos extendidos
+server.patch('/api/client-extended/:clientId', (req, res) => {
+  const { clientId } = req.params;
+  const db = router.db;
+
+  const existing = db.get('clientExtended').find({ clientId }).value();
+
+  if (!existing) {
+    return res.status(404).json({ error: 'Datos extendidos no encontrados' });
+  }
+
+  const updated = db.get('clientExtended')
+    .find({ clientId })
+    .assign({
+      ...req.body,
+      lastModified: new Date().toISOString()
+    })
+    .write();
+
+  res.json(updated);
+});
+
+// Eliminar datos extendidos
+server.delete('/api/client-extended/:clientId', (req, res) => {
+  const { clientId } = req.params;
+  const db = router.db;
+
+  const existing = db.get('clientExtended').find({ clientId }).value();
+
+  if (!existing) {
+    return res.status(404).json({ error: 'Datos extendidos no encontrados' });
+  }
+
+  db.get('clientExtended').remove({ clientId }).write();
+
+  res.json({ message: 'Datos extendidos eliminados correctamente' });
+});
+
+// Importación masiva de datos extendidos
+server.post('/api/client-extended/bulk', (req, res) => {
+  const { data } = req.body;
+  const db = router.db;
+
+  if (!Array.isArray(data)) {
+    return res.status(400).json({ error: 'Se requiere un array de datos' });
+  }
+
+  const results = [];
+
+  data.forEach(item => {
+    const existing = db.get('clientExtended').find({ clientId: item.clientId }).value();
+
+    if (existing) {
+      // Actualizar
+      const updated = db.get('clientExtended')
+        .find({ clientId: item.clientId })
+        .assign({
+          ...item,
+          lastModified: new Date().toISOString()
+        })
+        .write();
+      results.push(updated);
+    } else {
+      // Crear
+      const newData = {
+        id: `ext-${Date.now()}-${item.clientId}`,
+        ...item,
+        createdAt: new Date().toISOString(),
+        lastModified: new Date().toISOString()
+      };
+      db.get('clientExtended').push(newData).write();
+      results.push(newData);
+    }
+  });
+
+  res.status(201).json({
+    message: `${results.length} registros procesados`,
+    data: results
+  });
+});
+
+// ============================================
+// ENDPOINTS DE SETTINGS (CONFIGURACIONES)
+// ============================================
+
+// Obtener configuraciones
+server.get('/api/settings', (req, res) => {
+  const db = router.db;
+  const settings = db.get('settings').value() || { emailConfig: {}, emailTemplates: {} };
+  res.json(settings);
+});
+
+// Actualizar configuraciones
+server.patch('/api/settings', (req, res) => {
+  const db = router.db;
+  const currentSettings = db.get('settings').value() || { emailConfig: {}, emailTemplates: {} };
+
+  const updated = {
+    ...currentSettings,
+    ...req.body,
+    updatedAt: new Date().toISOString()
+  };
+
+  db.set('settings', updated).write();
+  res.json(updated);
+});
+
+// ============================================
+// ENDPOINTS DE NEIGHBORHOODS (BARRIOS)
+// ============================================
+
+// Obtener todos los barrios únicos desde los clientes
+server.get('/api/neighborhoods', (req, res) => {
+  const db = router.db;
+  const clients = db.get('clients').value();
+
+  // Obtener barrios únicos y filtrar vacíos
+  const neighborhoods = [...new Set(
+    clients
+      .map(c => c.neighborhood)
+      .filter(Boolean)
+  )].sort();
+
+  res.json(neighborhoods);
+});
+
+// Crear nuevo barrio (agrega un cliente temporal con ese barrio)
+server.post('/api/neighborhoods', (req, res) => {
+  const { name } = req.body;
+  const db = router.db;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Nombre de barrio requerido' });
+  }
+
+  const trimmedName = name.trim();
+
+  // Verificar si ya existe
+  const clients = db.get('clients').value();
+  const exists = clients.some(c => c.neighborhood === trimmedName);
+
+  if (exists) {
+    return res.status(400).json({ error: 'El barrio ya existe' });
+  }
+
+  // El barrio se creará automáticamente cuando se asigne a un cliente
+  res.status(201).json({ name: trimmedName, message: 'Barrio registrado. Se guardará cuando lo asigne a un cliente.' });
+});
+
+// Actualizar barrio (renombrar en todos los clientes)
+server.patch('/api/neighborhoods/:oldName', (req, res) => {
+  const { oldName } = req.params;
+  const { newName } = req.body;
+  const db = router.db;
+
+  if (!newName || !newName.trim()) {
+    return res.status(400).json({ error: 'Nuevo nombre de barrio requerido' });
+  }
+
+  const trimmedNewName = newName.trim();
+  const decodedOldName = decodeURIComponent(oldName);
+
+  // Verificar si el nuevo nombre ya existe
+  const clients = db.get('clients').value();
+  const newNameExists = clients.some(c => c.neighborhood === trimmedNewName && c.neighborhood !== decodedOldName);
+
+  if (newNameExists) {
+    return res.status(400).json({ error: 'El nuevo nombre ya existe' });
+  }
+
+  // Actualizar todos los clientes con este barrio
+  const clientsToUpdate = clients.filter(c => c.neighborhood === decodedOldName);
+
+  if (clientsToUpdate.length === 0) {
+    return res.status(404).json({ error: 'Barrio no encontrado' });
+  }
+
+  clientsToUpdate.forEach(client => {
+    db.get('clients')
+      .find({ id: client.id })
+      .assign({
+        neighborhood: trimmedNewName,
+        updatedAt: new Date().toISOString()
+      })
+      .write();
+  });
+
+  res.json({
+    message: `Barrio actualizado en ${clientsToUpdate.length} cliente(s)`,
+    oldName: decodedOldName,
+    newName: trimmedNewName,
+    affectedClients: clientsToUpdate.length
+  });
+});
+
+// Eliminar barrio (solo si no tiene clientes asignados)
+server.delete('/api/neighborhoods/:name', (req, res) => {
+  const { name } = req.params;
+  const db = router.db;
+  const decodedName = decodeURIComponent(name);
+
+  // Verificar si hay clientes en este barrio
+  const clients = db.get('clients').value();
+  const clientsInNeighborhood = clients.filter(c => c.neighborhood === decodedName);
+
+  if (clientsInNeighborhood.length > 0) {
+    return res.status(400).json({
+      error: `No se puede eliminar. Hay ${clientsInNeighborhood.length} cliente(s) en este barrio`,
+      clientCount: clientsInNeighborhood.length
+    });
+  }
+
+  res.json({ message: 'Barrio eliminado de la lista' });
+});
+
+// ============================================
+// ENDPOINTS DE RECEIPTS (RECIBOS)
+// ============================================
+
+// Obtener todos los recibos o filtrar por parámetros
+server.get('/api/receipts', (req, res) => {
+  const { clientId, collectorId, paymentId } = req.query;
+  const db = router.db;
+
+  let receipts = db.get('receipts').value() || [];
+
+  if (clientId) {
+    receipts = receipts.filter(r => r.client.id === clientId);
+  }
+
+  if (collectorId) {
+    receipts = receipts.filter(r => r.collector.id === collectorId);
+  }
+
+  if (paymentId) {
+    receipts = receipts.filter(r => r.payment.id === paymentId);
+  }
+
+  res.json(receipts);
+});
+
+// Crear recibo
+server.post('/api/receipts', (req, res) => {
+  const db = router.db;
+
+  const newReceipt = {
+    ...req.body,
+    id: req.body.id || `receipt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    createdAt: req.body.createdAt || new Date().toISOString()
+  };
+
+  db.get('receipts').push(newReceipt).write();
+
+  res.status(201).json(newReceipt);
+});
+
+// Actualizar recibo
+server.patch('/api/receipts/:id', (req, res) => {
+  const { id } = req.params;
+  const db = router.db;
+
+  const receipt = db.get('receipts').find({ id }).value();
+
+  if (!receipt) {
+    return res.status(404).json({ error: 'Recibo no encontrado' });
+  }
+
+  const updated = db.get('receipts')
+    .find({ id })
+    .assign(req.body)
+    .write();
+
+  res.json(updated);
+});
+
+// Eliminar recibo
+server.delete('/api/receipts/:id', (req, res) => {
+  const { id } = req.params;
+  const db = router.db;
+
+  const receipt = db.get('receipts').find({ id }).value();
+
+  if (!receipt) {
+    return res.status(404).json({ error: 'Recibo no encontrado' });
+  }
+
+  db.get('receipts').remove({ id }).write();
+
+  res.json({ message: 'Recibo eliminado correctamente' });
+});
+
+// ============================================
+// ENDPOINTS DE USER PREFERENCES (PREFERENCIAS DE USUARIO)
+// ============================================
+
+// Obtener preferencias de usuario
+server.get('/api/user-preferences/:userId', (req, res) => {
+  const { userId } = req.params;
+  const db = router.db;
+
+  const preferences = db.get('userPreferences').find({ userId }).value();
+
+  if (!preferences) {
+    // Devolver preferencias por defecto
+    return res.json({
+      userId,
+      theme: 'light',
+      fontSize: 'medium',
+      language: 'es',
+      sidebarCollapsed: false,
+      preferences: {
+        defaultPageSize: 25,
+        autoRefresh: false,
+        refreshInterval: 30000,
+        notifications: true,
+        sounds: false,
+        compactMode: false
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  res.json(preferences);
+});
+
+// Crear/actualizar preferencias de usuario
+server.post('/api/user-preferences', (req, res) => {
+  const { userId } = req.body;
+  const db = router.db;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId es requerido' });
+  }
+
+  const existing = db.get('userPreferences').find({ userId }).value();
+
+  if (existing) {
+    // Actualizar existente
+    const updated = db.get('userPreferences')
+      .find({ userId })
+      .assign({
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      })
+      .write();
+
+    return res.json(updated);
+  }
+
+  // Crear nuevo
+  const newPreferences = {
+    ...req.body,
+    id: `pref-${Date.now()}-${userId}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  db.get('userPreferences').push(newPreferences).write();
+
+  res.status(201).json(newPreferences);
+});
+
+// Actualizar preferencias de usuario
+server.patch('/api/user-preferences/:userId', (req, res) => {
+  const { userId } = req.params;
+  const db = router.db;
+
+  const existing = db.get('userPreferences').find({ userId }).value();
+
+  if (!existing) {
+    return res.status(404).json({ error: 'Preferencias no encontradas' });
+  }
+
+  const updated = db.get('userPreferences')
+    .find({ userId })
+    .assign({
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    })
+    .write();
+
+  res.json(updated);
+});
+
+// ============================================
+// ENDPOINTS DE VOUCHERS
+// ============================================
+
+// Obtener todos los vouchers o por cliente
+server.get('/api/vouchers', (req, res) => {
+  const { clientId, status } = req.query;
+  const db = router.db;
+
+  let vouchers = db.get('vouchers').value() || [];
+
+  // Filtrar por clientId si se proporciona
+  if (clientId) {
+    vouchers = vouchers.filter(v => v.clientId === clientId);
+  }
+
+  // Filtrar por status si se proporciona
+  if (status) {
+    vouchers = vouchers.filter(v => v.status === status);
+  }
+
+  res.json(vouchers);
+});
+
+// Subir/crear nuevo voucher
+server.post('/api/vouchers', (req, res) => {
+  const { clientId, operationNumber, fileName, fileType, fileSize, fileData, amount, paymentDate, paymentPeriod, paymentMethod, comments } = req.body;
+  const db = router.db;
+
+  // Verificar que no exista número de operación duplicado
+  const existing = db.get('vouchers').find({ operationNumber: operationNumber.toString() }).value();
+  if (existing) {
+    return res.status(400).json({ error: `El número de operación ${operationNumber} ya está registrado` });
+  }
+
+  const newVoucher = {
+    id: `voucher-${Date.now()}`,
+    clientId,
+    operationNumber: operationNumber.toString(),
+    fileName,
+    fileType,
+    fileSize,
+    fileData,
+    uploadDate: new Date().toISOString(),
+    status: 'pending',
+    reviewedBy: null,
+    reviewDate: null,
+    reviewComments: null,
+    amount: parseFloat(amount) || 0,
+    paymentDate: paymentDate || new Date().toISOString().split('T')[0],
+    paymentPeriod: paymentPeriod || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+    paymentMethod: paymentMethod || 'yape',
+    comments: comments || ''
+  };
+
+  db.get('vouchers').push(newVoucher).write();
+
+  res.status(201).json(newVoucher);
+});
+
+// Revisar voucher (aprobar/rechazar)
+server.patch('/api/vouchers/:id/review', (req, res) => {
+  const { id } = req.params;
+  const { status, reviewedBy, comments } = req.body;
+  const db = router.db;
+
+  const voucher = db.get('vouchers').find({ id }).value();
+
+  if (!voucher) {
+    return res.status(404).json({ error: 'Voucher no encontrado' });
+  }
+
+  const updatedVoucher = db.get('vouchers')
+    .find({ id })
+    .assign({
+      status,
+      reviewedBy,
+      reviewDate: new Date().toISOString(),
+      reviewComments: comments || ''
+    })
+    .write();
+
+  res.json(updatedVoucher);
+});
+
+// Eliminar voucher
+server.delete('/api/vouchers/:id', (req, res) => {
+  const { id } = req.params;
+  const db = router.db;
+
+  const voucher = db.get('vouchers').find({ id }).value();
+
+  if (!voucher) {
+    return res.status(404).json({ error: 'Voucher no encontrado' });
+  }
+
+  db.get('vouchers').remove({ id }).write();
+
+  res.json({ message: 'Voucher eliminado correctamente' });
+});
+
+// Verificar si número de operación existe
+server.get('/api/vouchers/check-operation/:operationNumber', (req, res) => {
+  const { operationNumber } = req.params;
+  const db = router.db;
+
+  const existing = db.get('vouchers').find({ operationNumber: operationNumber.toString() }).value();
+
+  res.json({
+    exists: !!existing,
+    voucher: existing || null
+  });
 });
 
 // ============================================

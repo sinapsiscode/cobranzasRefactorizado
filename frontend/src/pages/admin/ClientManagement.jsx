@@ -14,8 +14,8 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import NeighborhoodFilter from '../../components/common/NeighborhoodFilter';
 import ClientHistory from '../../components/common/ClientHistory';
 import ClientExtendedDetails from '../../components/common/ClientExtendedDetails';
-import { getStatusLabel, getStatusColor, getServiceTypeLabel, getServiceTypeColor } from '../../services/mock/schemas/client';
-import { getTarifaLabel, getTarifaColor } from '../../services/mock/schemas/clientExtended';
+import { getStatusLabel, getStatusColor, getServiceTypeLabel, getServiceTypeColor } from '../../schemas/client';
+import { getTarifaLabel, getTarifaColor } from '../../schemas/clientExtended';
 import { exportClientsToExcel } from '../../utils/excelExport';
 import { sendBulkPaymentReminders } from '../../services/emailService';
 
@@ -507,32 +507,16 @@ const ClientManagement = () => {
     );
   };
 
-  // Funciones para gestión de barrios
-  const loadNeighborhoods = () => {
+  // Funciones para gestión de barrios - MIGRADO: usa backend API REST
+  const loadNeighborhoods = async () => {
     try {
-      const saved = localStorage.getItem('tv-cable:neighborhoods');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setNeighborhoods(parsed.sort());
-      } else {
-        // Barrios por defecto si no hay configuración
-        const defaultNeighborhoods = ['Centro', 'Villa María', 'San Antonio', 'Las Flores', 'El Progreso'];
-        setNeighborhoods(defaultNeighborhoods);
-        saveNeighborhoods(defaultNeighborhoods);
-      }
+      const response = await fetch('http://localhost:8231/api/neighborhoods');
+      if (!response.ok) throw new Error('Error al cargar barrios');
+      const neighborhoods = await response.json();
+      setNeighborhoods(neighborhoods);
     } catch (error) {
-      console.error('Error loading neighborhoods:', error);
-      setNeighborhoods([]);
-    }
-  };
-
-  const saveNeighborhoods = (neighborhoodsList) => {
-    try {
-      localStorage.setItem('tv-cable:neighborhoods', JSON.stringify(neighborhoodsList));
-      return true;
-    } catch (error) {
-      console.error('Error saving neighborhoods:', error);
-      return false;
+      console.error('Error al cargar barrios:', error);
+      showError('Error al cargar barrios');
     }
   };
 
@@ -541,7 +525,7 @@ const ClientManagement = () => {
     setShowNeighborhoodsModal(true);
   };
 
-  const handleAddNeighborhood = () => {
+  const handleAddNeighborhood = async () => {
     if (!newNeighborhood.trim()) {
       showError('Ingrese el nombre del barrio');
       return;
@@ -549,69 +533,83 @@ const ClientManagement = () => {
 
     const trimmedName = newNeighborhood.trim();
 
-    // Verificar si ya existe
-    if (neighborhoods.some(n => n.toLowerCase() === trimmedName.toLowerCase())) {
-      showError('Este barrio ya existe');
-      return;
-    }
+    try {
+      const response = await fetch('http://localhost:8231/api/neighborhoods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmedName })
+      });
 
-    const updatedNeighborhoods = [...neighborhoods, trimmedName].sort();
-    setNeighborhoods(updatedNeighborhoods);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al agregar barrio');
+      }
 
-    if (saveNeighborhoods(updatedNeighborhoods)) {
-      success('Barrio agregado exitosamente');
+      const result = await response.json();
+      await loadNeighborhoods();
+      success(result.message || 'Barrio agregado correctamente');
       setNewNeighborhood('');
-    } else {
-      showError('Error al guardar el barrio');
+    } catch (error) {
+      showError(error.message || 'Error al agregar barrio');
+      console.error('Error al agregar barrio:', error);
     }
   };
 
-  const handleEditNeighborhood = (index, newName) => {
+  const handleEditNeighborhood = async (index, newName) => {
     if (!newName.trim()) {
       showError('Ingrese el nombre del barrio');
       return;
     }
 
     const trimmedName = newName.trim();
+    const oldName = neighborhoods[index];
 
-    // Verificar si ya existe (excluyendo el actual)
-    if (neighborhoods.some((n, i) => i !== index && n.toLowerCase() === trimmedName.toLowerCase())) {
-      showError('Este barrio ya existe');
-      return;
-    }
+    try {
+      const response = await fetch(`http://localhost:8231/api/neighborhoods/${encodeURIComponent(oldName)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newName: trimmedName })
+      });
 
-    const updatedNeighborhoods = [...neighborhoods];
-    updatedNeighborhoods[index] = trimmedName;
-    updatedNeighborhoods.sort();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al actualizar barrio');
+      }
 
-    setNeighborhoods(updatedNeighborhoods);
+      const result = await response.json();
 
-    if (saveNeighborhoods(updatedNeighborhoods)) {
-      success('Barrio actualizado exitosamente');
+      // Recargar clientes y barrios desde el backend
+      await fetchClients();
+      await loadNeighborhoods();
+
+      success(result.message || `Barrio actualizado en ${result.affectedClients} cliente(s)`);
       setEditingNeighborhood(null);
-    } else {
-      showError('Error al actualizar el barrio');
+    } catch (error) {
+      showError(error.message || 'Error al actualizar barrio');
+      console.error('Error al editar barrio:', error);
     }
   };
 
-  const handleDeleteNeighborhood = (index, neighborhoodName) => {
-    // Verificar si hay clientes con este barrio
-    const clientsWithNeighborhood = clients.filter(c => c.neighborhood === neighborhoodName);
-
-    if (clientsWithNeighborhood.length > 0) {
-      showError(`No se puede eliminar "${neighborhoodName}" porque ${clientsWithNeighborhood.length} cliente(s) lo tienen asignado`);
+  const handleDeleteNeighborhood = async (index, neighborhoodName) => {
+    if (!window.confirm(`¿Está seguro de eliminar el barrio "${neighborhoodName}"?`)) {
       return;
     }
 
-    if (window.confirm(`¿Está seguro de eliminar el barrio "${neighborhoodName}"?`)) {
-      const updatedNeighborhoods = neighborhoods.filter((_, i) => i !== index);
-      setNeighborhoods(updatedNeighborhoods);
+    try {
+      const response = await fetch(`http://localhost:8231/api/neighborhoods/${encodeURIComponent(neighborhoodName)}`, {
+        method: 'DELETE'
+      });
 
-      if (saveNeighborhoods(updatedNeighborhoods)) {
-        success('Barrio eliminado exitosamente');
-      } else {
-        showError('Error al eliminar el barrio');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al eliminar barrio');
       }
+
+      await loadNeighborhoods();
+      success('Barrio eliminado de la lista');
+    } catch (error) {
+      showError(error.message || 'Error al eliminar barrio');
+      console.error('Error al eliminar barrio:', error);
     }
   };
 

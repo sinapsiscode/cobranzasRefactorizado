@@ -1,18 +1,23 @@
 // Servicio de generación de reportes
-import { db } from '../mock/db.js';
+// MIGRADO A JSON SERVER - Usa fetch() en lugar de db
 import { downloadPDF, previewPDF } from './pdfGenerator.jsx';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import { getServiceTypeLabel } from '../mock/schemas/service.js';
+import { getServiceTypeLabel } from '../../schemas/service.js';
+
+const API_URL = '/api';
 
 export class ReportService {
   // Generar datos para reporte de cobranza
   static async generateCollectionReportData(filters = {}) {
     try {
       const { startDate, endDate, collectorId } = filters;
-      
-      // Obtener datos base
-      const payments = db.getCollection('payments') || [];
-      const clients = db.getCollection('clients') || [];
+
+      // Obtener datos base desde API
+      const paymentsResponse = await fetch(`${API_URL}/payments`);
+      const payments = await paymentsResponse.json();
+
+      const clientsResponse = await fetch(`${API_URL}/clients`);
+      const clients = await clientsResponse.json();
       
       // Crear mapa de clientes para nombres
       const clientMap = clients.reduce((acc, client) => {
@@ -70,8 +75,11 @@ export class ReportService {
   // Generar datos para reporte de morosidad
   static async generateOverdueReportData(filters = {}) {
     try {
-      const payments = db.getCollection('payments') || [];
-      const clients = db.getCollection('clients') || [];
+      const paymentsResponse = await fetch(`${API_URL}/payments`);
+      const payments = await paymentsResponse.json();
+
+      const clientsResponse = await fetch(`${API_URL}/clients`);
+      const clients = await clientsResponse.json();
       
       // Crear mapa de clientes
       const clientMap = clients.reduce((acc, client) => {
@@ -138,10 +146,13 @@ export class ReportService {
   static async generateIncomeReportData(filters = {}) {
     try {
       const { startDate, endDate } = filters;
-      
-      // Obtener datos base
-      const payments = db.getCollection('payments') || [];
-      const clients = db.getCollection('clients') || [];
+
+      // Obtener datos base desde API
+      const paymentsResponse = await fetch(`${API_URL}/payments`);
+      const payments = await paymentsResponse.json();
+
+      const clientsResponse = await fetch(`${API_URL}/clients`);
+      const clients = await clientsResponse.json();
       
       // Filtrar solo pagos confirmados
       let paidPayments = payments.filter(p => p.status === 'paid');
@@ -252,11 +263,16 @@ export class ReportService {
   static async generateDelinquentsByNeighborhoodReportData(filters = {}) {
     try {
       const { startDate, endDate } = filters;
-      
-      // Obtener datos
-      const clients = db.getCollection('clients') || [];
-      const payments = db.getCollection('payments') || [];
-      const services = db.getCollection('services') || [];
+
+      // Obtener datos desde API
+      const clientsResponse = await fetch(`${API_URL}/clients`);
+      const clients = await clientsResponse.json();
+
+      const paymentsResponse = await fetch(`${API_URL}/payments`);
+      const payments = await paymentsResponse.json();
+
+      const servicesResponse = await fetch(`${API_URL}/services`);
+      const services = await servicesResponse.json();
 
       // Crear mapa de servicios
       const serviceMap = services.reduce((acc, service) => {
@@ -376,7 +392,9 @@ export class ReportService {
   // Obtener lista de cobradores para filtros
   static async getCollectors() {
     try {
-      const users = db.getCollection('users') || [];
+      const response = await fetch(`${API_URL}/users`);
+      const users = await response.json();
+
       return users
         .filter(user => user.role === 'collector' && user.isActive)
         .map(user => ({

@@ -1,6 +1,9 @@
 // Store de UI - loading, modales, sidebar
+// Migrated to use JSON Server API for user preferences persistence
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
+
+const API_URL = '/api';
 
 export const useUIStore = create(
   persist(
@@ -10,7 +13,7 @@ export const useUIStore = create(
       globalLoading: false,
       sidebarOpen: true,
       sidebarCollapsed: false,
-      
+
       // Modales
       modals: {
         clientForm: false,
@@ -19,7 +22,7 @@ export const useUIStore = create(
         imagePreview: false,
         reportPreview: false
       },
-      
+
       // Datos de modales
       modalData: {
         clientForm: null,
@@ -28,21 +31,21 @@ export const useUIStore = create(
         imagePreview: null,
         reportPreview: null
       },
-      
-      // Tema y preferencias
+
+      // Tema y preferencias (persistentes)
       theme: 'light',
       fontSize: 'medium',
       language: 'es',
-      
+
       // Layout y responsive
       isMobile: false,
       isTablet: false,
       screenSize: 'desktop',
-      
+
       // Estados de páginas
       currentPage: 'dashboard',
       breadcrumbs: [],
-      
+
       // Búsqueda global
       globalSearch: {
         isOpen: false,
@@ -50,8 +53,8 @@ export const useUIStore = create(
         results: [],
         loading: false
       },
-      
-      // Configuraciones de usuario
+
+      // Configuraciones de usuario (persistentes)
       preferences: {
         defaultPageSize: 25,
         autoRefresh: false,
@@ -61,7 +64,160 @@ export const useUIStore = create(
         compactMode: false
       },
 
-      // Acciones generales
+      // Estados de backend sync
+      preferencesLoading: false,
+      preferencesSaving: false,
+      preferencesError: null,
+      lastSyncedUserId: null,
+
+      // ==================== BACKEND SYNC METHODS ====================
+
+      /**
+       * Load user preferences from backend
+       * @param {string} userId - ID of the user
+       * @returns {Promise<void>}
+       */
+      loadUserPreferences: async (userId) => {
+        if (!userId) {
+          console.warn('loadUserPreferences called without userId');
+          return;
+        }
+
+        set({ preferencesLoading: true, preferencesError: null });
+
+        try {
+          const response = await fetch(`${API_URL}/user-preferences/${userId}`);
+
+          if (!response.ok) {
+            // If preferences don't exist (404), use defaults
+            if (response.status === 404) {
+              console.log('No preferences found for user, using defaults');
+              set({
+                preferencesLoading: false,
+                lastSyncedUserId: userId
+              });
+              return;
+            }
+            throw new Error(`Failed to load preferences: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          // Update state with backend preferences
+          set({
+            theme: data.theme || 'light',
+            fontSize: data.fontSize || 'medium',
+            language: data.language || 'es',
+            sidebarCollapsed: data.sidebarCollapsed || false,
+            preferences: {
+              defaultPageSize: data.preferences?.defaultPageSize || 25,
+              autoRefresh: data.preferences?.autoRefresh || false,
+              refreshInterval: data.preferences?.refreshInterval || 30000,
+              notifications: data.preferences?.notifications !== false, // default true
+              sounds: data.preferences?.sounds || false,
+              compactMode: data.preferences?.compactMode || false
+            },
+            preferencesLoading: false,
+            preferencesError: null,
+            lastSyncedUserId: userId
+          });
+
+          // Apply theme to document
+          document.documentElement.className = data.theme || 'light';
+
+        } catch (error) {
+          console.error('Error loading user preferences:', error);
+          set({
+            preferencesLoading: false,
+            preferencesError: error.message
+          });
+        }
+      },
+
+      /**
+       * Save user preferences to backend
+       * @param {string} userId - ID of the user
+       * @returns {Promise<boolean>} - Success status
+       */
+      saveUserPreferences: async (userId) => {
+        if (!userId) {
+          console.warn('saveUserPreferences called without userId');
+          return false;
+        }
+
+        const state = get();
+        set({ preferencesSaving: true, preferencesError: null });
+
+        try {
+          // Prepare preferences payload
+          const payload = {
+            userId,
+            theme: state.theme,
+            fontSize: state.fontSize,
+            language: state.language,
+            sidebarCollapsed: state.sidebarCollapsed,
+            preferences: state.preferences,
+            updatedAt: new Date().toISOString()
+          };
+
+          // Try to update existing preferences first
+          let response = await fetch(`${API_URL}/user-preferences/${userId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+          });
+
+          // If not found, create new preferences
+          if (response.status === 404) {
+            response = await fetch(`${API_URL}/user-preferences`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                ...payload,
+                id: userId, // Use userId as ID for easier lookup
+                createdAt: new Date().toISOString()
+              })
+            });
+          }
+
+          if (!response.ok) {
+            throw new Error(`Failed to save preferences: ${response.status}`);
+          }
+
+          set({
+            preferencesSaving: false,
+            preferencesError: null,
+            lastSyncedUserId: userId
+          });
+
+          return true;
+
+        } catch (error) {
+          console.error('Error saving user preferences:', error);
+          set({
+            preferencesSaving: false,
+            preferencesError: error.message
+          });
+          return false;
+        }
+      },
+
+      /**
+       * Auto-save helper - saves to backend if userId is available
+       * @param {string|null} userId - Optional userId for auto-save
+       */
+      autoSave: async (userId) => {
+        if (userId) {
+          await get().saveUserPreferences(userId);
+        }
+      },
+
+      // ==================== ACCIONES GENERALES ====================
+
       setLoading: (loading) => {
         set({ loading });
       },
@@ -70,7 +226,8 @@ export const useUIStore = create(
         set({ globalLoading });
       },
 
-      // Gestión de sidebar
+      // ==================== GESTIÓN DE SIDEBAR ====================
+
       toggleSidebar: () => {
         set(state => ({ sidebarOpen: !state.sidebarOpen }));
       },
@@ -79,15 +236,18 @@ export const useUIStore = create(
         set({ sidebarOpen: open });
       },
 
-      toggleSidebarCollapse: () => {
+      toggleSidebarCollapse: async (userId = null) => {
         set(state => ({ sidebarCollapsed: !state.sidebarCollapsed }));
+        await get().autoSave(userId);
       },
 
-      setSidebarCollapsed: (collapsed) => {
+      setSidebarCollapsed: async (collapsed, userId = null) => {
         set({ sidebarCollapsed: collapsed });
+        await get().autoSave(userId);
       },
 
-      // Gestión de modales
+      // ==================== GESTIÓN DE MODALES ====================
+
       openModal: (modalName, data = null) => {
         set(state => ({
           modals: { ...state.modals, [modalName]: true },
@@ -106,34 +266,47 @@ export const useUIStore = create(
         set(state => {
           const modals = {};
           const modalData = {};
-          
+
           Object.keys(state.modals).forEach(key => {
             modals[key] = false;
             modalData[key] = null;
           });
-          
+
           return { modals, modalData };
         });
       },
 
-      // Tema
-      setTheme: (theme) => {
+      // ==================== TEMA ====================
+
+      setTheme: async (theme, userId = null) => {
         set({ theme });
         // Aplicar clase al documento
         document.documentElement.className = theme;
+        await get().autoSave(userId);
       },
 
-      toggleTheme: () => {
+      toggleTheme: async (userId = null) => {
         const { theme } = get();
         const newTheme = theme === 'light' ? 'dark' : 'light';
-        get().setTheme(newTheme);
+        await get().setTheme(newTheme, userId);
       },
 
-      // Responsive
+      setFontSize: async (fontSize, userId = null) => {
+        set({ fontSize });
+        await get().autoSave(userId);
+      },
+
+      setLanguage: async (language, userId = null) => {
+        set({ language });
+        await get().autoSave(userId);
+      },
+
+      // ==================== RESPONSIVE ====================
+
       setScreenSize: (size) => {
         const isMobile = size === 'mobile';
         const isTablet = size === 'tablet';
-        
+
         set({
           screenSize: size,
           isMobile,
@@ -143,7 +316,8 @@ export const useUIStore = create(
         });
       },
 
-      // Navegación y breadcrumbs
+      // ==================== NAVEGACIÓN Y BREADCRUMBS ====================
+
       setCurrentPage: (page) => {
         set({ currentPage: page });
       },
@@ -158,7 +332,8 @@ export const useUIStore = create(
         }));
       },
 
-      // Búsqueda global
+      // ==================== BÚSQUEDA GLOBAL ====================
+
       toggleGlobalSearch: () => {
         set(state => ({
           globalSearch: {
@@ -187,14 +362,16 @@ export const useUIStore = create(
         }));
       },
 
-      // Preferencias
-      updatePreferences: (newPreferences) => {
+      // ==================== PREFERENCIAS ====================
+
+      updatePreferences: async (newPreferences, userId = null) => {
         set(state => ({
           preferences: { ...state.preferences, ...newPreferences }
         }));
+        await get().autoSave(userId);
       },
 
-      resetPreferences: () => {
+      resetPreferences: async (userId = null) => {
         set({
           preferences: {
             defaultPageSize: 25,
@@ -205,9 +382,11 @@ export const useUIStore = create(
             compactMode: false
           }
         });
+        await get().autoSave(userId);
       },
 
-      // Utilidades
+      // ==================== UTILIDADES ====================
+
       isModalOpen: (modalName) => {
         const { modals } = get();
         return modals[modalName] || false;
@@ -223,7 +402,8 @@ export const useUIStore = create(
         return Object.values(modals).some(isOpen => isOpen);
       },
 
-      // Estados específicos de UI
+      // ==================== ESTADOS ESPECÍFICOS DE UI ====================
+
       setTableLoading: (loading) => {
         set(state => ({
           loading: { ...state.loading, table: loading }
@@ -236,35 +416,56 @@ export const useUIStore = create(
         }));
       },
 
-      // Método para detectar cambios de viewport
+      // ==================== RESIZE HANDLING ====================
+
       handleResize: () => {
         const width = window.innerWidth;
         let size = 'desktop';
-        
+
         if (width < 640) {
           size = 'mobile';
         } else if (width < 1024) {
           size = 'tablet';
         }
-        
+
         get().setScreenSize(size);
       },
 
-      // Inicialización
-      initialize: () => {
+      // ==================== INICIALIZACIÓN ====================
+
+      /**
+       * Initialize UI store
+       * @param {string|null} userId - Optional userId to load preferences from backend
+       */
+      initialize: async (userId = null) => {
+        // Load preferences from backend if userId provided
+        if (userId) {
+          await get().loadUserPreferences(userId);
+        }
+
         // Detectar tamaño inicial
         get().handleResize();
-        
+
         // Agregar listener de resize
         window.addEventListener('resize', get().handleResize);
-        
-        // Aplicar tema inicial
-        get().setTheme(get().theme);
+
+        // Aplicar tema inicial (already applied in loadUserPreferences if userId provided)
+        if (!userId) {
+          get().setTheme(get().theme);
+        }
+      },
+
+      /**
+       * Cleanup on unmount
+       */
+      cleanup: () => {
+        window.removeEventListener('resize', get().handleResize);
       }
     }),
     {
       name: 'tv-cable-ui',
       partialize: (state) => ({
+        // Only persist these fields to LocalStorage as fallback/cache
         theme: state.theme,
         fontSize: state.fontSize,
         language: state.language,

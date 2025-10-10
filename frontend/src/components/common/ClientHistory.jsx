@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, User, AlertTriangle, CheckCircle, Pause, XCircle, RotateCcw, MessageCircle } from 'lucide-react';
-import { getStatusLabel, getStatusColor } from '../../services/mock/schemas/client';
+import { getStatusLabel, getStatusColor } from '../../schemas/client';
 
 const ClientHistory = ({ client, onClose }) => {
   // Función helper para abrir WhatsApp

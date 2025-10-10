@@ -27,7 +27,7 @@ import {
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import PaymentReceipt from '../../components/common/PaymentReceipt';
-import { db } from '../../services/mock/db';
+// MIGRADO A JSON SERVER - import eliminado
 
 const CollectorPayments = () => {
   const { user } = useAuthStore();
@@ -226,20 +226,8 @@ const CollectorPayments = () => {
         paymentMethod === 'efectivo' ? 'cash' : 'transfer',
         selectedVoucher
       );
-      
-      // Guardar información del servicio en localStorage para futuros reportes
-      const paymentServiceInfo = {
-        paymentId: selectedPayment.id,
-        serviceType: serviceType,
-        duoSplit: serviceType === 'duo' ? duoSplit : null,
-        paymentMethod: paymentMethod,
-        collectedDate: new Date().toISOString()
-      };
-      
-      const storedServiceInfo = localStorage.getItem('tv-cable:payment-service-info') || '[]';
-      const serviceInfoArray = JSON.parse(storedServiceInfo);
-      serviceInfoArray.push(paymentServiceInfo);
-      localStorage.setItem('tv-cable:payment-service-info', JSON.stringify(serviceInfoArray));
+
+      // MIGRADO: La información del pago ya se guarda en el backend a través de collectPayment
 
       // Si es un pago DUO, registrar en ambas cajas (Internet y Cable)
       if (serviceType === 'duo') {

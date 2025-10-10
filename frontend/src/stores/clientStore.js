@@ -1,6 +1,7 @@
 // Store de clientes - lista, CRUD, filtros
 import { create } from 'zustand';
-import { mockServer } from '../services/mock/server.js';
+
+const API_URL = '/api';
 
 export const useClientStore = create((set, get) => ({
   // Estado
@@ -30,7 +31,7 @@ export const useClientStore = create((set, get) => ({
   // Acciones CRUD
   fetchClients: async (customFilters = {}) => {
     set({ loading: true, error: null });
-    
+
     try {
       const { filters, pagination } = get();
       const params = {
@@ -39,10 +40,29 @@ export const useClientStore = create((set, get) => ({
         page: pagination.page,
         limit: pagination.limit
       };
-      
-      const response = await mockServer.getClients(params);
-      const { items, pagination: paginationData } = response.data;
-      
+
+      // Construir query string
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          if (Array.isArray(value)) {
+            value.forEach(v => queryParams.append(key, v));
+          } else {
+            queryParams.append(key, value);
+          }
+        }
+      });
+
+      const response = await fetch(`${API_URL}/clients?${queryParams.toString()}`);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error al cargar clientes' }));
+        throw new Error(errorData.error || errorData.message || 'Error al cargar clientes');
+      }
+
+      const data = await response.json();
+      const { items, pagination: paginationData } = data;
+
       set({
         clients: items,
         pagination: paginationData,
@@ -50,79 +70,112 @@ export const useClientStore = create((set, get) => ({
         error: null,
         lastSync: new Date().toISOString()
       });
-      
+
       return items;
     } catch (error) {
       set({
         loading: false,
-        error: error.error || 'Error al cargar clientes',
+        error: error.message || 'Error al cargar clientes',
         clients: []
       });
-      
+
       throw error;
     }
   },
 
   fetchClient: async (id) => {
     set({ loading: true, error: null });
-    
+
     try {
-      const response = await mockServer.getClient(id);
-      const client = response.data;
-      
+      const response = await fetch(`${API_URL}/clients/${id}`);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error al cargar cliente' }));
+        throw new Error(errorData.error || errorData.message || 'Error al cargar cliente');
+      }
+
+      const data = await response.json();
+      const client = data.data || data;
+
       set({
         currentClient: client,
         loading: false,
         error: null
       });
-      
+
       return client;
     } catch (error) {
       set({
         loading: false,
-        error: error.error || 'Error al cargar cliente',
+        error: error.message || 'Error al cargar cliente',
         currentClient: null
       });
-      
+
       throw error;
     }
   },
 
   createClient: async (clientData) => {
     set({ loading: true, error: null });
-    
+
     try {
-      const response = await mockServer.createClient(clientData);
-      const newClient = response.data;
-      
+      const response = await fetch(`${API_URL}/clients`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(clientData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error al crear cliente' }));
+        throw new Error(errorData.error || errorData.message || 'Error al crear cliente');
+      }
+
+      const data = await response.json();
+      const newClient = data.data || data;
+
       // Actualizar lista local
       set(state => ({
         clients: [newClient, ...state.clients],
         loading: false,
         error: null
       }));
-      
+
       // Refrescar datos
       await get().fetchClients();
-      
+
       return newClient;
     } catch (error) {
       set({
         loading: false,
-        error: error.error || 'Error al crear cliente'
+        error: error.message || 'Error al crear cliente'
       });
-      
+
       throw error;
     }
   },
 
   updateClient: async (id, updates) => {
     set({ loading: true, error: null });
-    
+
     try {
-      const response = await mockServer.updateClient(id, updates);
-      const updatedClient = response.data;
-      
+      const response = await fetch(`${API_URL}/clients/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error al actualizar cliente' }));
+        throw new Error(errorData.error || errorData.message || 'Error al actualizar cliente');
+      }
+
+      const data = await response.json();
+      const updatedClient = data.data || data;
+
       // Actualizar lista local
       set(state => ({
         clients: state.clients.map(client =>
@@ -132,24 +185,31 @@ export const useClientStore = create((set, get) => ({
         loading: false,
         error: null
       }));
-      
+
       return updatedClient;
     } catch (error) {
       set({
         loading: false,
-        error: error.error || 'Error al actualizar cliente'
+        error: error.message || 'Error al actualizar cliente'
       });
-      
+
       throw error;
     }
   },
 
   deleteClient: async (id) => {
     set({ loading: true, error: null });
-    
+
     try {
-      await mockServer.deleteClient(id);
-      
+      const response = await fetch(`${API_URL}/clients/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error al eliminar cliente' }));
+        throw new Error(errorData.error || errorData.message || 'Error al eliminar cliente');
+      }
+
       // Actualizar lista local
       set(state => ({
         clients: state.clients.filter(client => client.id !== id),
@@ -157,17 +217,17 @@ export const useClientStore = create((set, get) => ({
         loading: false,
         error: null
       }));
-      
+
       // Refrescar datos
       await get().fetchClients();
-      
+
       return true;
     } catch (error) {
       set({
         loading: false,
-        error: error.error || 'Error al eliminar cliente'
+        error: error.message || 'Error al eliminar cliente'
       });
-      
+
       throw error;
     }
   },
@@ -178,7 +238,7 @@ export const useClientStore = create((set, get) => ({
       filters: { ...state.filters, ...newFilters },
       pagination: { ...state.pagination, page: 1 } // Reset a página 1
     }));
-    
+
     // Auto-refrescar si hay cambios significativos
     if (newFilters.search !== undefined || newFilters.status !== undefined || newFilters.plan !== undefined || newFilters.neighborhoods !== undefined) {
       get().fetchClients();
@@ -197,7 +257,7 @@ export const useClientStore = create((set, get) => ({
       },
       pagination: { ...get().pagination, page: 1 }
     });
-    
+
     get().fetchClients();
   },
 
@@ -206,7 +266,7 @@ export const useClientStore = create((set, get) => ({
     set(state => ({
       pagination: { ...state.pagination, page }
     }));
-    
+
     get().fetchClients();
   },
 
@@ -214,7 +274,7 @@ export const useClientStore = create((set, get) => ({
     set(state => ({
       pagination: { ...state.pagination, limit, page: 1 }
     }));
-    
+
     get().fetchClients();
   },
 
@@ -266,7 +326,7 @@ export const useClientStore = create((set, get) => ({
   needsRefresh: () => {
     const { lastSync } = get();
     if (!lastSync) return true;
-    
+
     const timeDiff = Date.now() - new Date(lastSync).getTime();
     return timeDiff > 5 * 60 * 1000; // 5 minutos
   },
@@ -274,39 +334,45 @@ export const useClientStore = create((set, get) => ({
   // Funciones específicas para cambio de estado
   changeClientStatus: async (clientId, newStatus, reason = '', adminId = null) => {
     set({ loading: true, error: null });
-    
+
     try {
       const client = get().clients.find(c => c.id === clientId);
       if (!client) {
         throw new Error('Cliente no encontrado');
       }
 
-      const updates = {
+      const requestBody = {
         status: newStatus,
-        statusReason: reason,
-        statusHistory: [
-          ...(client.statusHistory || []),
-          {
-            fromStatus: client.status || 'active',
-            toStatus: newStatus,
-            date: new Date().toISOString(),
-            reason: reason,
-            changedBy: adminId
-          }
-        ],
-        updatedAt: new Date().toISOString()
+        reason: reason,
+        adminId: adminId
       };
 
-      // Lógica específica por estado
-      if (newStatus === 'paused') {
-        updates.pauseStartDate = new Date().toISOString();
-        updates.pauseReason = reason;
-      } else if (newStatus === 'terminated' && (client.status === 'paused' || client.status === 'active')) {
-        updates.isArchived = true;
-        updates.archivedDate = new Date().toISOString();
+      const response = await fetch(`${API_URL}/clients/${clientId}/change-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error al cambiar estado del cliente' }));
+        throw new Error(errorData.error || errorData.message || 'Error al cambiar estado del cliente');
       }
 
-      const updatedClient = await get().updateClient(clientId, updates);
+      const data = await response.json();
+      const updatedClient = data.data || data;
+
+      // Actualizar lista local
+      set(state => ({
+        clients: state.clients.map(c =>
+          c.id === clientId ? updatedClient : c
+        ),
+        currentClient: state.currentClient?.id === clientId ? updatedClient : state.currentClient,
+        loading: false,
+        error: null
+      }));
+
       return updatedClient;
     } catch (error) {
       set({
@@ -327,7 +393,7 @@ export const useClientStore = create((set, get) => ({
       const clientsToTerminate = clients.filter(client => {
         if (client.status !== 'paused') return false;
         if (!client.pauseStartDate) return false;
-        
+
         const pauseStart = new Date(client.pauseStartDate);
         return pauseStart <= thirtyDaysAgo;
       });
@@ -335,8 +401,8 @@ export const useClientStore = create((set, get) => ({
       // Procesar bajas automáticas
       const promises = clientsToTerminate.map(client =>
         get().changeClientStatus(
-          client.id, 
-          'terminated', 
+          client.id,
+          'terminated',
           'Baja automática: pausa mayor a 30 días',
           'system'
         )
@@ -380,21 +446,21 @@ export const useClientStore = create((set, get) => ({
   // Nueva función para obtener barrios con clientes deudores
   getNeighborhoodsWithDebtors: (payments = []) => {
     const { clients } = get();
-    
+
     // Función auxiliar para determinar si un cliente tiene deuda
     const hasDebt = (clientId) => {
       const clientPayments = payments.filter(p => p.clientId === clientId);
       if (clientPayments.length === 0) return true; // sin-pagos = tiene deuda
-      
+
       const hasOverdue = clientPayments.some(p => p.status === 'overdue');
       const hasPending = clientPayments.some(p => p.status === 'pending');
-      
+
       return hasOverdue || hasPending;
     };
-    
+
     // Filtrar clientes con deuda
     const clientsWithDebt = clients.filter(client => hasDebt(client.id));
-    
+
     // Obtener barrios únicos de clientes con deuda
     const neighborhoods = [...new Set(clientsWithDebt.map(client => client.neighborhood).filter(Boolean))];
     return neighborhoods.sort();

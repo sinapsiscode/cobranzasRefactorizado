@@ -13,7 +13,7 @@ import {
 import { useCashBoxStore } from '../../stores/cashBoxStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useNotificationStore } from '../../stores/notificationStore';
-import { getStatusLabel, getStatusColor } from '../../services/mock/schemas/cashBoxRequest';
+import { getStatusLabel, getStatusColor } from '../../schemas/cashBoxRequest';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 
@@ -39,21 +39,9 @@ const CashBoxRequestsPanel = () => {
   const [filter, setFilter] = useState('pending'); // pending, all
 
   useEffect(() => {
-    console.log('🔍 Cargando solicitudes pendientes...');
+    // MIGRADO: Cargar solicitudes desde el backend
     loadPendingRequests();
-    
-    // Cargar datos de simulación
     loadSimulationData();
-    
-    // También cargar todas las solicitudes
-    const stored = localStorage.getItem('tv-cable:cashbox-requests');
-    console.log('📦 Solicitudes en localStorage:', stored);
-    
-    if (stored) {
-      const requests = JSON.parse(stored);
-      console.log('📋 Total de solicitudes:', requests.length);
-      console.log('⏳ Solicitudes pendientes:', requests.filter(r => r.status === 'pending').length);
-    }
   }, []);
 
   // Filtrar solicitudes de los últimos 3 meses
@@ -140,17 +128,14 @@ const CashBoxRequestsPanel = () => {
           <button
             onClick={async () => {
               try {
-                console.log('🔄 Cargando datos de simulación...');
                 const result = await loadSimulationData();
-                console.log('📊 Resultado carga simulación:', result);
-                
+
                 if (result) {
                   success('Datos de demostración cargados correctamente');
                 } else {
                   showError('Error al cargar datos de demostración');
                 }
               } catch (error) {
-                console.error('❌ Error:', error);
                 showError('Error al cargar datos de demostración');
               }
             }}

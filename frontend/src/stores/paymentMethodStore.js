@@ -1,6 +1,7 @@
 // Store para gestionar configuración de métodos de pago
 import { create } from 'zustand';
-import { mockServer } from '../services/mock/server.js';
+
+const API_URL = '/api';
 
 export const usePaymentMethodStore = create((set, get) => ({
   // Estado
@@ -39,8 +40,13 @@ export const usePaymentMethodStore = create((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const response = await mockServer.getPaymentMethods();
-      const paymentMethods = response.data;
+      const response = await fetch(`${API_URL}/paymentMethods`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const paymentMethods = await response.json();
 
       set({
         paymentMethods,
@@ -54,7 +60,7 @@ export const usePaymentMethodStore = create((set, get) => ({
       console.warn('Error cargando métodos de pago:', error);
       set({
         loading: false,
-        error: error.error || 'Error al cargar métodos de pago'
+        error: error.message || 'Error al cargar métodos de pago'
       });
 
       return get().paymentMethods;
@@ -65,8 +71,19 @@ export const usePaymentMethodStore = create((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const response = await mockServer.updatePaymentMethod(methodType, methodData);
-      const updatedMethod = response.data;
+      const response = await fetch(`${API_URL}/paymentMethods/${methodType}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(methodData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const updatedMethod = await response.json();
 
       set(state => ({
         paymentMethods: {
@@ -81,7 +98,7 @@ export const usePaymentMethodStore = create((set, get) => ({
     } catch (error) {
       set({
         loading: false,
-        error: error.error || 'Error al actualizar método de pago'
+        error: error.message || 'Error al actualizar método de pago'
       });
 
       throw error;
@@ -92,8 +109,20 @@ export const usePaymentMethodStore = create((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const response = await mockServer.uploadQRCode(methodType, file);
-      const qrCodeUrl = response.data.url;
+      const formData = new FormData();
+      formData.append('qrCode', file);
+
+      const response = await fetch(`${API_URL}/paymentMethods/${methodType}/qr`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const qrCodeUrl = data.url;
 
       // Actualizar el QR en el método correspondiente
       set(state => ({
@@ -112,7 +141,7 @@ export const usePaymentMethodStore = create((set, get) => ({
     } catch (error) {
       set({
         loading: false,
-        error: error.error || 'Error al subir código QR'
+        error: error.message || 'Error al subir código QR'
       });
 
       throw error;
@@ -121,7 +150,7 @@ export const usePaymentMethodStore = create((set, get) => ({
 
   addBankAccount: async (accountData) => {
     const { paymentMethods } = get();
-    const currentAccounts = paymentMethods.bankTransfer.accounts || [];
+    const currentAccounts = paymentMethods.bank_transfer?.accounts || [];
 
     const newAccount = {
       id: Date.now().toString(),
@@ -132,8 +161,8 @@ export const usePaymentMethodStore = create((set, get) => ({
     const updatedAccounts = [...currentAccounts, newAccount];
 
     try {
-      await get().updatePaymentMethod('bankTransfer', {
-        ...paymentMethods.bankTransfer,
+      await get().updatePaymentMethod('bank_transfer', {
+        ...paymentMethods.bank_transfer,
         accounts: updatedAccounts
       });
 
@@ -145,13 +174,13 @@ export const usePaymentMethodStore = create((set, get) => ({
 
   removeBankAccount: async (accountId) => {
     const { paymentMethods } = get();
-    const currentAccounts = paymentMethods.bankTransfer.accounts || [];
+    const currentAccounts = paymentMethods.bank_transfer?.accounts || [];
 
     const updatedAccounts = currentAccounts.filter(acc => acc.id !== accountId);
 
     try {
-      await get().updatePaymentMethod('bankTransfer', {
-        ...paymentMethods.bankTransfer,
+      await get().updatePaymentMethod('bank_transfer', {
+        ...paymentMethods.bank_transfer,
         accounts: updatedAccounts
       });
 
@@ -163,7 +192,7 @@ export const usePaymentMethodStore = create((set, get) => ({
 
   addPaymentPoint: async (pointData) => {
     const { paymentMethods } = get();
-    const currentPoints = paymentMethods.cash.paymentPoints || [];
+    const currentPoints = paymentMethods.cash?.paymentPoints || [];
 
     const newPoint = {
       id: Date.now().toString(),
@@ -187,7 +216,7 @@ export const usePaymentMethodStore = create((set, get) => ({
 
   removePaymentPoint: async (pointId) => {
     const { paymentMethods } = get();
-    const currentPoints = paymentMethods.cash.paymentPoints || [];
+    const currentPoints = paymentMethods.cash?.paymentPoints || [];
 
     const updatedPoints = currentPoints.filter(point => point.id !== pointId);
 

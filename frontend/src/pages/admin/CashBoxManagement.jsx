@@ -18,15 +18,14 @@ import CashBoxRequestsPanel from '../../components/subadmin/CashBoxRequestsPanel
 import CashBoxSupervisor from '../../components/subadmin/CashBoxSupervisor';
 import { useAuthStore } from '../../stores/authStore';
 import { useNotificationStore } from '../../stores/notificationStore';
-import { db } from '../../services/mock/db';
+// MIGRADO A JSON SERVER - import eliminado
+import { ServiceTypes, getServiceTypeLabel } from '../../schemas/service';
 import {
-  ServiceTypes,
   ExpenseStatuses,
-  getServiceTypeLabel,
-  getStatusLabel,
-  getStatusColor,
+  getExpenseStatusLabel as getStatusLabel,
+  getExpenseStatusColor as getStatusColor,
   validateExpense
-} from '../../services/mock/schemas/expense';
+} from '../../schemas/expense';
 
 const CashBoxManagement = () => {
   const [activeTab, setActiveTab] = useState('requests');
@@ -139,7 +138,7 @@ const CashBoxManagement = () => {
         updatedAt: new Date().toISOString()
       };
 
-      // Guardar en base de datos mock
+      // NOTA: Este código usa el antiguo sistema db.js y debe migrarse al backend
       const currentExpenses = db.getCollection('expenses') || [];
       currentExpenses.push(newExpense);
       db.setCollection('expenses', currentExpenses);

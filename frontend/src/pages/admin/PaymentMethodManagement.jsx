@@ -8,9 +8,9 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
-import { db } from '../../services/mock/db';
+// MIGRADO A JSON SERVER - import eliminado
 import { useNotificationStore } from '../../stores/notificationStore';
-import { validatePaymentMethod } from '../../services/mock/schemas/paymentMethod';
+import { validatePaymentMethod } from '../../schemas/paymentMethod';
 
 const PaymentMethodManagement = () => {
   const [paymentMethods, setPaymentMethods] = useState([]);

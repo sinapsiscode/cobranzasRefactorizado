@@ -1,6 +1,6 @@
 // Módulo de importación de Excel
 import * as XLSX from 'xlsx';
-import { formatPeriod } from '../../services/mock/schemas/monthlyDebt';
+import { formatPeriod } from '../../schemas/monthlyDebt';
 
 // Mapeo de columnas del Excel a campos del sistema
 const DEFAULT_COLUMN_MAPPING = {

@@ -1,3 +1,10 @@
+// Tipos de servicio disponibles
+export const ServiceTypes = {
+  PLAN_HOGAR: 'plan_hogar',
+  PLAN_CORPORATIVO: 'plan_corporativo',
+  PLAN_NEGOCIO: 'plan_negocio'
+};
+
 // Esquema de Servicio para gestión por Administradores
 export const ServiceSchema = {
   id: { type: 'string', required: true },

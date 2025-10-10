@@ -21,7 +21,7 @@ import {
   MapPin,
   Download
 } from 'lucide-react';
-import { getMonthName, getDebtStatusLabel, getDebtStatusColor } from '../../services/mock/schemas/monthlyDebt';
+import { getMonthName, getDebtStatusLabel, getDebtStatusColor } from '../../schemas/monthlyDebt';
 import { exportMonthlyDebtMatrixToExcel } from '../../utils/excelExport';
 
 const MonthlyDebts = () => {
