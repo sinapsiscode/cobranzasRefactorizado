@@ -88,7 +88,7 @@ class ErrorBoundary extends React.Component {
                   <br />
                   <strong>Stack trace:</strong>
                   <pre className="whitespace-pre-wrap">
-                    {this.state.errorInfo.componentStack}
+                    {this.state.errorInfo?.componentStack || 'No stack trace available'}
                   </pre>
                 </div>
               </details>

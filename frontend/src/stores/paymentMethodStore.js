@@ -1,7 +1,7 @@
 // Store para gestionar configuración de métodos de pago
 import { create } from 'zustand';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const usePaymentMethodStore = create((set, get) => ({
   // Estado

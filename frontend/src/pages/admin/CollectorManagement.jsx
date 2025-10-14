@@ -34,6 +34,8 @@ import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 // MIGRADO A JSON SERVER - import eliminado
 
+const API_URL = 'http://localhost:8231/api';
+
 const CollectorManagement = () => {
   const { success, error: showError, info } = useNotificationStore();
   const { createCashBoxClosingAlert } = useAlertStore();
@@ -52,6 +54,8 @@ const CollectorManagement = () => {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedCollector, setSelectedCollector] = useState(null);
+  const [collectorHistory, setCollectorHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [selectedCollectors, setSelectedCollectors] = useState([]);
   const [reminderMessage, setReminderMessage] = useState('');
   const [formData, setFormData] = useState({
@@ -69,17 +73,43 @@ const CollectorManagement = () => {
     loadCollectors();
   }, [selectedMonth, dateFrom, dateTo]);
 
+  // Load collector history when modal opens
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (showHistoryModal && selectedCollector) {
+        setLoadingHistory(true);
+        const history = await getCollectorHistory(selectedCollector.id);
+        setCollectorHistory(history);
+        setLoadingHistory(false);
+      }
+    };
+    loadHistory();
+  }, [showHistoryModal, selectedCollector]);
+
   const loadCollectors = async () => {
     setLoading(true);
     try {
-      const users = db.getCollection('users') || [];
-      const collectorUsers = users.filter(user => user.role === 'collector');
-      const clients = db.getCollection('clients') || [];
-      
+      // Fetch users with role='collector' from API
+      const usersResponse = await fetch(`${API_URL}/users?role=collector`);
+      if (!usersResponse.ok) {
+        throw new Error('Error al cargar usuarios');
+      }
+      const usersData = await usersResponse.json();
+      const collectorUsers = usersData.items || usersData;
+
+      // Fetch all clients
+      const clientsResponse = await fetch(`${API_URL}/clients`);
+      const clientsData = await clientsResponse.json();
+      const clients = clientsData.items || clientsData;
+
+      // Fetch all payments
+      const paymentsResponse = await fetch(`${API_URL}/payments`);
+      const paymentsData = await paymentsResponse.json();
+      const allPayments = paymentsData.items || paymentsData;
+
       // Agregar estadísticas para cada cobrador
       const collectorsWithStats = collectorUsers.map(collector => {
-        const payments = db.getCollection('payments') || [];
-        let collectorPayments = payments.filter(p => p.collectorId === collector.id);
+        let collectorPayments = allPayments.filter(p => p.collectorId === collector.id);
         
         // Filtrar según el tipo de filtro activo
         if (filterType === 'month' && selectedMonth) {
@@ -191,26 +221,36 @@ const CollectorManagement = () => {
     setShowEditModal(true);
   };
 
-  const handleSubmitAdd = (e) => {
+  const handleSubmitAdd = async (e) => {
     e.preventDefault();
-    
+
     // Validar que el alias esté presente
     if (!formData.alias || formData.alias.trim().length === 0) {
       showError('El alias es obligatorio para cobradores');
       return;
     }
-    
+
     try {
       const newCollector = {
         ...formData,
-        id: `collector-${Date.now()}`,
         role: 'collector',
         lastLogin: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
-      db.create('users', newCollector);
+
+      const response = await fetch(`${API_URL}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newCollector)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear cobrador');
+      }
+
       success('Cobrador agregado exitosamente');
       setShowAddModal(false);
       loadCollectors();
@@ -219,22 +259,33 @@ const CollectorManagement = () => {
     }
   };
 
-  const handleSubmitEdit = (e) => {
+  const handleSubmitEdit = async (e) => {
     e.preventDefault();
-    
+
     // Validar que el alias esté presente
     if (!formData.alias || formData.alias.trim().length === 0) {
       showError('El alias es obligatorio para cobradores');
       return;
     }
-    
+
     try {
       const updates = { ...formData };
       if (!updates.password) {
         delete updates.password;
       }
-      
-      db.update('users', selectedCollector.id, updates);
+
+      const response = await fetch(`${API_URL}/users/${selectedCollector.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar cobrador');
+      }
+
       success('Cobrador actualizado exitosamente');
       setShowEditModal(false);
       loadCollectors();
@@ -245,7 +296,18 @@ const CollectorManagement = () => {
 
   const handleToggleStatus = async (collector) => {
     try {
-      db.update('users', collector.id, { isActive: !collector.isActive });
+      const response = await fetch(`${API_URL}/users/${collector.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ isActive: !collector.isActive })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cambiar estado');
+      }
+
       success(`Cobrador ${!collector.isActive ? 'activado' : 'desactivado'} exitosamente`);
       loadCollectors();
     } catch (error) {
@@ -256,7 +318,14 @@ const CollectorManagement = () => {
   const handleDeleteCollector = async (collector) => {
     if (window.confirm(`¿Está seguro de eliminar al cobrador ${collector.fullName}?`)) {
       try {
-        db.delete('users', collector.id);
+        const response = await fetch(`${API_URL}/users/${collector.id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al eliminar cobrador');
+        }
+
         success('Cobrador eliminado exitosamente');
         loadCollectors();
       } catch (error) {
@@ -271,29 +340,39 @@ const CollectorManagement = () => {
   };
 
   // Obtener historial completo de cobros del cobrador
-  const getCollectorHistory = (collectorId) => {
-    const payments = db.getCollection('payments') || [];
-    const clients = db.getCollection('clients') || [];
+  const getCollectorHistory = async (collectorId) => {
+    try {
+      // Fetch payments for this collector
+      const paymentsResponse = await fetch(`${API_URL}/payments?collectorId=${collectorId}`);
+      const paymentsData = await paymentsResponse.json();
+      const collectorPayments = paymentsData.items || paymentsData;
 
-    const collectorPayments = payments.filter(p => p.collectorId === collectorId);
+      // Fetch all clients
+      const clientsResponse = await fetch(`${API_URL}/clients`);
+      const clientsData = await clientsResponse.json();
+      const clients = clientsData.items || clientsData;
 
-    // Enriquecer pagos con información del cliente
-    const enrichedPayments = collectorPayments.map(payment => {
-      const client = clients.find(c => c.id === payment.clientId);
-      return {
-        ...payment,
-        clientName: client ? client.fullName : 'Cliente no encontrado',
-        clientPhone: client ? client.phone : '',
-        clientNeighborhood: client ? client.neighborhood : ''
-      };
-    });
+      // Enriquecer pagos con información del cliente
+      const enrichedPayments = collectorPayments.map(payment => {
+        const client = clients.find(c => c.id === payment.clientId);
+        return {
+          ...payment,
+          clientName: client ? client.fullName : 'Cliente no encontrado',
+          clientPhone: client ? client.phone : '',
+          clientNeighborhood: client ? client.neighborhood : ''
+        };
+      });
 
-    // Ordenar por fecha de pago (más recientes primero)
-    return enrichedPayments.sort((a, b) => {
-      const dateA = new Date(a.paymentDate || a.dueDate);
-      const dateB = new Date(b.paymentDate || b.dueDate);
-      return dateB - dateA;
-    });
+      // Ordenar por fecha de pago (más recientes primero)
+      return enrichedPayments.sort((a, b) => {
+        const dateA = new Date(a.paymentDate || a.dueDate);
+        const dateB = new Date(b.paymentDate || b.dueDate);
+        return dateB - dateA;
+      });
+    } catch (error) {
+      console.error('Error loading collector history:', error);
+      return [];
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -1368,7 +1447,11 @@ const CollectorManagement = () => {
             {/* Lista de Cobros */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-4">
-                {getCollectorHistory(selectedCollector.id).length === 0 ? (
+                {loadingHistory ? (
+                  <div className="p-8 flex justify-center">
+                    <LoadingSpinner size="large" text="Cargando historial..." />
+                  </div>
+                ) : collectorHistory.length === 0 ? (
                   <div className="text-center py-12">
                     <History className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">No hay historial</h3>
@@ -1377,7 +1460,7 @@ const CollectorManagement = () => {
                     </p>
                   </div>
                 ) : (
-                  getCollectorHistory(selectedCollector.id).map((payment, index) => (
+                  collectorHistory.map((payment, index) => (
                     <div key={payment.id || index} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">

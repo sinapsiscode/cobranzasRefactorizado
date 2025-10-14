@@ -27,6 +27,8 @@ import {
   validateExpense
 } from '../../schemas/expense';
 
+const API_URL = 'http://localhost:8231/api';
+
 const CashBoxManagement = () => {
   const [activeTab, setActiveTab] = useState('requests');
   const [cashFlowView, setCashFlowView] = useState('summary'); // 'summary', 'income', 'expenses'
@@ -62,9 +64,14 @@ const CashBoxManagement = () => {
     }
   }, [activeTab]);
 
-  const loadPaymentMethods = () => {
+  const loadPaymentMethods = async () => {
     try {
-      const methods = db.getCollection('paymentMethods') || [];
+      const response = await fetch(`${API_URL}/paymentMethods`);
+      if (!response.ok) {
+        throw new Error('Error al cargar métodos de pago');
+      }
+      const data = await response.json();
+      const methods = data.items || data;
       // Filtrar solo métodos activos
       setPaymentMethods(methods.filter(m => m.isActive));
     } catch (error) {
@@ -73,16 +80,19 @@ const CashBoxManagement = () => {
     }
   };
 
-  const loadCashFlowData = () => {
+  const loadCashFlowData = async () => {
     setLoading(true);
     try {
       // Cargar gastos
-      const expensesData = db.getCollection('expenses') || [];
-      setExpenses(expensesData);
+      const expensesResponse = await fetch(`${API_URL}/expenses`);
+      const expensesData = await expensesResponse.json();
+      setExpenses(expensesData.items || expensesData || []);
 
       // Cargar pagos (ingresos)
-      const paymentsData = db.getCollection('payments') || [];
-      setPayments(paymentsData.filter(p => p.status === 'paid' || p.status === 'validated'));
+      const paymentsResponse = await fetch(`${API_URL}/payments`);
+      const paymentsData = await paymentsResponse.json();
+      const allPayments = paymentsData.items || paymentsData || [];
+      setPayments(allPayments.filter(p => p.status === 'paid' || p.status === 'validated'));
     } catch (error) {
       console.error('Error loading cash flow data:', error);
       showError('Error al cargar datos del flujo de caja');
@@ -112,7 +122,7 @@ const CashBoxManagement = () => {
     setShowExpenseModal(true);
   };
 
-  const handleSubmitExpense = () => {
+  const handleSubmitExpense = async () => {
     try {
       // Validar datos
       const errors = validateExpense({
@@ -129,7 +139,6 @@ const CashBoxManagement = () => {
 
       // Crear nuevo gasto
       const newExpense = {
-        id: `exp_${Date.now()}`,
         ...expenseFormData,
         amount: parseFloat(expenseFormData.amount),
         registeredBy: user?.id,
@@ -138,13 +147,24 @@ const CashBoxManagement = () => {
         updatedAt: new Date().toISOString()
       };
 
-      // NOTA: Este código usa el antiguo sistema db.js y debe migrarse al backend
-      const currentExpenses = db.getCollection('expenses') || [];
-      currentExpenses.push(newExpense);
-      db.setCollection('expenses', currentExpenses);
+      // POST al API
+      const response = await fetch(`${API_URL}/expenses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newExpense)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear gasto');
+      }
+
+      const data = await response.json();
+      const createdExpense = data.data || data;
 
       // Actualizar estado local
-      setExpenses([newExpense, ...expenses]);
+      setExpenses([createdExpense, ...expenses]);
 
       success('Gasto registrado exitosamente');
       setShowExpenseModal(false);

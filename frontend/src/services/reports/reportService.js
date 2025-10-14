@@ -4,7 +4,7 @@ import { downloadPDF, previewPDF } from './pdfGenerator.jsx';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { getServiceTypeLabel } from '../../schemas/service.js';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export class ReportService {
   // Generar datos para reporte de cobranza
@@ -14,11 +14,13 @@ export class ReportService {
 
       // Obtener datos base desde API
       const paymentsResponse = await fetch(`${API_URL}/payments`);
-      const payments = await paymentsResponse.json();
+      const paymentsData = await paymentsResponse.json();
+      const payments = paymentsData.items || paymentsData || [];
 
       const clientsResponse = await fetch(`${API_URL}/clients`);
-      const clients = await clientsResponse.json();
-      
+      const clientsData = await clientsResponse.json();
+      const clients = clientsData.items || clientsData || [];
+
       // Crear mapa de clientes para nombres
       const clientMap = clients.reduce((acc, client) => {
         acc[client.id] = client.fullName;
@@ -76,11 +78,13 @@ export class ReportService {
   static async generateOverdueReportData(filters = {}) {
     try {
       const paymentsResponse = await fetch(`${API_URL}/payments`);
-      const payments = await paymentsResponse.json();
+      const paymentsData = await paymentsResponse.json();
+      const payments = paymentsData.items || paymentsData || [];
 
       const clientsResponse = await fetch(`${API_URL}/clients`);
-      const clients = await clientsResponse.json();
-      
+      const clientsData = await clientsResponse.json();
+      const clients = clientsData.items || clientsData || [];
+
       // Crear mapa de clientes
       const clientMap = clients.reduce((acc, client) => {
         acc[client.id] = client.fullName;
@@ -149,11 +153,13 @@ export class ReportService {
 
       // Obtener datos base desde API
       const paymentsResponse = await fetch(`${API_URL}/payments`);
-      const payments = await paymentsResponse.json();
+      const paymentsData = await paymentsResponse.json();
+      const payments = paymentsData.items || paymentsData || [];
 
       const clientsResponse = await fetch(`${API_URL}/clients`);
-      const clients = await clientsResponse.json();
-      
+      const clientsData = await clientsResponse.json();
+      const clients = clientsData.items || clientsData || [];
+
       // Filtrar solo pagos confirmados
       let paidPayments = payments.filter(p => p.status === 'paid');
       
@@ -266,13 +272,16 @@ export class ReportService {
 
       // Obtener datos desde API
       const clientsResponse = await fetch(`${API_URL}/clients`);
-      const clients = await clientsResponse.json();
+      const clientsData = await clientsResponse.json();
+      const clients = clientsData.items || clientsData || [];
 
       const paymentsResponse = await fetch(`${API_URL}/payments`);
-      const payments = await paymentsResponse.json();
+      const paymentsData = await paymentsResponse.json();
+      const payments = paymentsData.items || paymentsData || [];
 
       const servicesResponse = await fetch(`${API_URL}/services`);
-      const services = await servicesResponse.json();
+      const servicesData = await servicesResponse.json();
+      const services = servicesData.items || servicesData || [];
 
       // Crear mapa de servicios
       const serviceMap = services.reduce((acc, service) => {
@@ -393,7 +402,8 @@ export class ReportService {
   static async getCollectors() {
     try {
       const response = await fetch(`${API_URL}/users`);
-      const users = await response.json();
+      const data = await response.json();
+      const users = data.items || data || [];
 
       return users
         .filter(user => user.role === 'collector' && user.isActive)

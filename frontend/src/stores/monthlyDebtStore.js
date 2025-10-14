@@ -8,7 +8,7 @@ import {
   generateMonthlyDebts
 } from '../schemas/monthlyDebt';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const useMonthlyDebtStore = create((set, get) => ({
   // Estado

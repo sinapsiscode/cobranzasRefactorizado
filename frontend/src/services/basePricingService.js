@@ -3,7 +3,7 @@
  * MIGRADO A JSON SERVER - Usa API backend en lugar de localStorage
  */
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 // Precios por defecto (fallback si no hay configuración)
 const DEFAULT_BASE_PRICES = {

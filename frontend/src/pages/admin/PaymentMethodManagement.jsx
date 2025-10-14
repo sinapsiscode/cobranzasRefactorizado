@@ -12,6 +12,8 @@ import {
 import { useNotificationStore } from '../../stores/notificationStore';
 import { validatePaymentMethod } from '../../schemas/paymentMethod';
 
+const API_URL = 'http://localhost:8231/api';
+
 const PaymentMethodManagement = () => {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -29,9 +31,19 @@ const PaymentMethodManagement = () => {
     loadPaymentMethods();
   }, []);
 
-  const loadPaymentMethods = () => {
-    const methods = db.getCollection('paymentMethods') || [];
-    setPaymentMethods(methods);
+  const loadPaymentMethods = async () => {
+    try {
+      const response = await fetch(`${API_URL}/paymentMethods`);
+      if (!response.ok) {
+        throw new Error('Error al cargar métodos de pago');
+      }
+      const data = await response.json();
+      const methods = data.items || data || [];
+      setPaymentMethods(methods);
+    } catch (error) {
+      console.error('Error loading payment methods:', error);
+      showError('Error al cargar métodos de pago');
+    }
   };
 
   const handleOpenModal = (method = null) => {
@@ -63,7 +75,7 @@ const PaymentMethodManagement = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validar datos
@@ -82,7 +94,16 @@ const PaymentMethodManagement = () => {
     try {
       if (editingMethod) {
         // Editar método existente
-        db.update('paymentMethods', editingMethod.id, formData);
+        const response = await fetch(`${API_URL}/paymentMethods/${editingMethod.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al actualizar método de pago');
+        }
+
         success('Método de pago actualizado exitosamente');
       } else {
         // Crear nuevo método
@@ -92,11 +113,21 @@ const PaymentMethodManagement = () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
-        db.create('paymentMethods', newMethod);
+
+        const response = await fetch(`${API_URL}/paymentMethods`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newMethod)
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al crear método de pago');
+        }
+
         success('Método de pago creado exitosamente');
       }
 
-      loadPaymentMethods();
+      await loadPaymentMethods();
       handleCloseModal();
     } catch (error) {
       console.error('Error saving payment method:', error);
@@ -104,25 +135,41 @@ const PaymentMethodManagement = () => {
     }
   };
 
-  const handleToggleActive = (method) => {
+  const handleToggleActive = async (method) => {
     try {
-      db.update('paymentMethods', method.id, {
-        isActive: !method.isActive
+      const response = await fetch(`${API_URL}/paymentMethods/${method.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isActive: !method.isActive
+        })
       });
+
+      if (!response.ok) {
+        throw new Error('Error al cambiar estado');
+      }
+
       success(`Método de pago ${!method.isActive ? 'activado' : 'desactivado'}`);
-      loadPaymentMethods();
+      await loadPaymentMethods();
     } catch (error) {
       console.error('Error toggling payment method:', error);
       showError('Error al cambiar el estado del método de pago');
     }
   };
 
-  const handleDelete = (method) => {
+  const handleDelete = async (method) => {
     if (window.confirm(`¿Está seguro de eliminar el método de pago "${method.name}"?`)) {
       try {
-        db.delete('paymentMethods', method.id);
+        const response = await fetch(`${API_URL}/paymentMethods/${method.id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al eliminar método de pago');
+        }
+
         success('Método de pago eliminado exitosamente');
-        loadPaymentMethods();
+        await loadPaymentMethods();
       } catch (error) {
         console.error('Error deleting payment method:', error);
         showError('Error al eliminar el método de pago');

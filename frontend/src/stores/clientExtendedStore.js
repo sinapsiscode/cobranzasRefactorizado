@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { clientExtendedSchema, getEffectiveCost } from '../schemas/clientExtended';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const useClientExtendedStore = create((set, get) => ({
   // Estado

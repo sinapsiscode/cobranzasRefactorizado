@@ -1,7 +1,7 @@
 // Store de pagos - pagos, vouchers, estadísticas
 import { create } from 'zustand';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const usePaymentStore = create((set, get) => ({
   // Estado
@@ -162,11 +162,11 @@ export const usePaymentStore = create((set, get) => ({
       const data = await response.json();
       const updatedPayment = data.data;
 
-      // Actualizar lista local
+      // Actualizar lista local y filtrar nulls/undefined
       set(state => ({
-        payments: state.payments.map(payment =>
-          payment.id === id ? updatedPayment : payment
-        ),
+        payments: state.payments
+          .map(payment => payment && payment.id === id ? updatedPayment : payment)
+          .filter(p => p != null),
         currentPayment: state.currentPayment?.id === id ? updatedPayment : state.currentPayment,
         loading: false,
         error: null
@@ -221,11 +221,11 @@ export const usePaymentStore = create((set, get) => ({
       const data = await response.json();
       const updatedPayment = data.data;
 
-      // Actualizar lista local
+      // Actualizar lista local y filtrar nulls/undefined
       set(state => ({
-        payments: state.payments.map(payment =>
-          payment.id === id ? updatedPayment : payment
-        ),
+        payments: state.payments
+          .map(payment => payment && payment.id === id ? updatedPayment : payment)
+          .filter(p => p != null),
         currentPayment: state.currentPayment?.id === id ? updatedPayment : state.currentPayment,
         loading: false,
         error: null
@@ -318,22 +318,22 @@ export const usePaymentStore = create((set, get) => ({
   // Filtros específicos para validación
   getCollectedPayments: () => {
     const { payments } = get();
-    return payments.filter(p => p.status === 'collected');
+    return payments.filter(p => p && p.status === 'collected');
   },
 
   getValidatedPayments: () => {
     const { payments } = get();
-    return payments.filter(p => p.status === 'validated');
+    return payments.filter(p => p && p.status === 'validated');
   },
 
   getPendingValidationPayments: () => {
     const { payments } = get();
-    return payments.filter(p => p.status === 'collected'); // Collected payments need validation
+    return payments.filter(p => p && p.status === 'collected'); // Collected payments need validation
   },
 
   getPendingValidationCount: () => {
     const { payments } = get();
-    return payments.filter(p => p.status === 'collected').length;
+    return payments.filter(p => p && p.status === 'collected').length;
   },
 
   // Métricas y estadísticas
@@ -490,22 +490,22 @@ export const usePaymentStore = create((set, get) => ({
 
   getPaymentsByClient: (clientId) => {
     const { payments } = get();
-    return payments.filter(payment => payment.clientId === clientId);
+    return payments.filter(payment => payment && payment.clientId === clientId);
   },
 
   getPaymentsByStatus: (status) => {
     const { payments } = get();
-    return payments.filter(payment => payment.status === status);
+    return payments.filter(payment => payment && payment.status === status);
   },
 
   getPendingPayments: () => {
     const { payments } = get();
-    return payments.filter(payment => ['pending', 'overdue'].includes(payment.status));
+    return payments.filter(payment => payment && ['pending', 'overdue'].includes(payment.status));
   },
 
   getOverduePayments: () => {
     const { payments } = get();
-    return payments.filter(payment => payment.status === 'overdue');
+    return payments.filter(payment => payment && payment.status === 'overdue');
   },
 
   getTotalCollected: (startDate = null, endDate = null) => {
@@ -513,7 +513,7 @@ export const usePaymentStore = create((set, get) => ({
 
     return payments
       .filter(payment => {
-        if (payment.status !== 'paid') return false;
+        if (!payment || payment.status !== 'paid') return false;
         if (startDate && payment.paymentDate < startDate) return false;
         if (endDate && payment.paymentDate > endDate) return false;
         return true;
@@ -523,7 +523,7 @@ export const usePaymentStore = create((set, get) => ({
 
   getCollectionByPeriod: (period = 'month') => {
     const { payments } = get();
-    const paidPayments = payments.filter(p => p.status === 'paid');
+    const paidPayments = payments.filter(p => p && p.status === 'paid');
 
     const grouped = paidPayments.reduce((acc, payment) => {
       const key = period === 'month' ? payment.month : payment.year.toString();

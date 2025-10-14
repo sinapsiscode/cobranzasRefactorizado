@@ -26,6 +26,8 @@ import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 // MIGRADO A JSON SERVER - import eliminado
 
+const API_URL = 'http://localhost:8231/api';
+
 const UserManagement = () => {
   const { success, error: showError, info } = useNotificationStore();
   const [users, setUsers] = useState([]);
@@ -60,22 +62,36 @@ const UserManagement = () => {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const allUsers = db.getCollection('users') || [];
-      
+      // Fetch all users from API
+      const usersResponse = await fetch(`${API_URL}/users`);
+      if (!usersResponse.ok) {
+        throw new Error('Error al cargar usuarios');
+      }
+      const usersData = await usersResponse.json();
+      const allUsers = usersData.items || usersData;
+
+      // Fetch all payments from API
+      const paymentsResponse = await fetch(`${API_URL}/payments`);
+      const paymentsData = await paymentsResponse.json();
+      const allPayments = paymentsData.items || paymentsData;
+
+      // Fetch all clients from API (only if needed)
+      const clientsResponse = await fetch(`${API_URL}/clients`);
+      const clientsData = await clientsResponse.json();
+      const allClients = clientsData.items || clientsData;
+
       // Agregar estadísticas para cada usuario
       const usersWithStats = allUsers.map(user => {
         let stats = {};
-        
+
         if (user.role === 'collector') {
-          const payments = db.getCollection('payments') || [];
-          const collectorPayments = payments.filter(p => p.collectorId === user.id);
-          const clients = db.getCollection('clients') || [];
-          
+          const collectorPayments = allPayments.filter(p => p.collectorId === user.id);
+
           const assignedClients = new Set();
           collectorPayments.forEach(payment => {
             assignedClients.add(payment.clientId);
           });
-          
+
           stats = {
             totalClients: assignedClients.size,
             totalCollected: collectorPayments
@@ -85,9 +101,8 @@ const UserManagement = () => {
             pendingPayments: collectorPayments.filter(p => p.status === 'pending').length
           };
         } else if (user.role === 'client') {
-          const payments = db.getCollection('payments') || [];
-          const clientPayments = payments.filter(p => p.clientId === user.id);
-          
+          const clientPayments = allPayments.filter(p => p.clientId === user.id);
+
           stats = {
             totalPayments: clientPayments.length,
             paidPayments: clientPayments.filter(p => p.status === 'paid').length,
@@ -95,10 +110,10 @@ const UserManagement = () => {
             overduePayments: clientPayments.filter(p => p.status === 'overdue').length
           };
         }
-        
+
         return { ...user, stats };
       });
-      
+
       setUsers(usersWithStats);
     } catch (error) {
       console.error('Error loading users:', error);
@@ -152,9 +167,9 @@ const UserManagement = () => {
     setShowEditModal(true);
   };
 
-  const handleSubmitAdd = (e) => {
+  const handleSubmitAdd = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Verificar si el username ya existe
       const existingUser = users.find(u => u.username === formData.username);
@@ -169,16 +184,26 @@ const UserManagement = () => {
         showError('Ya existe un usuario con este email');
         return;
       }
-      
+
       const newUser = {
         ...formData,
-        id: `user-${Date.now()}`,
         lastLogin: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
-      db.create('users', newUser);
+
+      const response = await fetch(`${API_URL}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newUser)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear usuario');
+      }
+
       success('Usuario creado exitosamente');
       setShowAddModal(false);
       loadUsers();
@@ -187,9 +212,9 @@ const UserManagement = () => {
     }
   };
 
-  const handleSubmitEdit = (e) => {
+  const handleSubmitEdit = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Verificar username único (excluyendo el usuario actual)
       const existingUser = users.find(u => u.username === formData.username && u.id !== selectedUser.id);
@@ -204,14 +229,25 @@ const UserManagement = () => {
         showError('Ya existe un usuario con este email');
         return;
       }
-      
+
       const updates = { ...formData };
       if (!updates.password) {
         delete updates.password;
       }
       updates.updatedAt = new Date().toISOString();
-      
-      db.update('users', selectedUser.id, updates);
+
+      const response = await fetch(`/api/users/${selectedUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar usuario');
+      }
+
       success('Usuario actualizado exitosamente');
       setShowEditModal(false);
       loadUsers();
@@ -222,7 +258,18 @@ const UserManagement = () => {
 
   const handleToggleStatus = async (user) => {
     try {
-      db.update('users', user.id, { isActive: !user.isActive });
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ isActive: !user.isActive })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cambiar estado');
+      }
+
       success(`Usuario ${!user.isActive ? 'activado' : 'desactivado'} exitosamente`);
       loadUsers();
     } catch (error) {
@@ -233,7 +280,14 @@ const UserManagement = () => {
   const handleDeleteUser = async (user) => {
     if (window.confirm(`¿Está seguro de eliminar al usuario ${user.fullName}?`)) {
       try {
-        db.delete('users', user.id);
+        const response = await fetch(`/api/users/${user.id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al eliminar usuario');
+        }
+
         success('Usuario eliminado exitosamente');
         loadUsers();
       } catch (error) {

@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const useAuthStore = create(
   persist(
@@ -20,20 +20,35 @@ export const useAuthStore = create(
         set({ loading: true, error: null });
 
         try {
-          const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(credentials),
-          });
+          // Obtener todos los usuarios
+          const response = await fetch(`${API_URL}/users`);
 
           if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error de conexión');
+            throw new Error('Error de conexión con el servidor');
           }
 
-          const { user, token } = await response.json();
+          const data = await response.json();
+          const users = data.items || data || [];
+
+          // Buscar usuario por username
+          const user = users.find(u => u.username === credentials.username);
+
+          if (!user) {
+            throw new Error('Usuario no encontrado');
+          }
+
+          // Verificar contraseña (en producción esto debería ser hash)
+          if (user.password !== credentials.password) {
+            throw new Error('Contraseña incorrecta');
+          }
+
+          // Verificar que el usuario esté activo
+          if (!user.isActive) {
+            throw new Error('Usuario inactivo. Contacte al administrador');
+          }
+
+          // Generar token simple (en producción sería JWT)
+          const token = `${user.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
           // Calcular expiración de sesión (24 horas por defecto)
           const expiresIn = 24 * 60 * 60 * 1000; // 24 horas en ms
@@ -63,38 +78,22 @@ export const useAuthStore = create(
       },
 
       logout: async () => {
-        set({ loading: true });
-
-        try {
-          const { token } = get();
-          if (token) {
-            await fetch(`${API_URL}/auth/logout`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-            });
-          }
-        } catch (error) {
-          // Ignorar errores de logout
-          console.warn('Error during logout:', error);
-        } finally {
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            loading: false,
-            error: null,
-            sessionExpiry: null
-          });
-        }
+        // Simplemente limpiar el estado local
+        // No hay necesidad de llamar al servidor con JSON Server
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          loading: false,
+          error: null,
+          sessionExpiry: null
+        });
       },
 
       validateToken: async () => {
-        const { token, sessionExpiry } = get();
+        const { token, sessionExpiry, user } = get();
 
-        if (!token) {
+        if (!token || !user) {
           return false;
         }
 
@@ -104,43 +103,16 @@ export const useAuthStore = create(
           return false;
         }
 
-        set({ loading: true });
+        // Con JSON Server, solo verificamos la expiración local
+        // En producción, esto haría una llamada al servidor para validar el JWT
 
-        try {
-          const response = await fetch(`${API_URL}/auth/verify`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+        set({
+          isAuthenticated: true,
+          loading: false,
+          error: null
+        });
 
-          if (!response.ok) {
-            throw new Error('Token inválido');
-          }
-
-          const { user } = await response.json();
-
-          set({
-            user,
-            isAuthenticated: true,
-            loading: false,
-            error: null
-          });
-
-          return true;
-        } catch (error) {
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            loading: false,
-            error: null,
-            sessionExpiry: null
-          });
-
-          return false;
-        }
+        return true;
       },
 
       clearError: () => {

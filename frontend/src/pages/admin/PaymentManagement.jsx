@@ -44,6 +44,8 @@ import PaymentRegistrationModal from '../../components/common/PaymentRegistratio
 import { generatePaymentReceipt } from '../../services/reports/pdfGenerator';
 // MIGRADO A JSON SERVER - import eliminado
 
+const API_URL = 'http://localhost:8231/api';
+
 const PaymentManagement = () => {
   const { 
     payments, 
@@ -242,18 +244,21 @@ const PaymentManagement = () => {
     try {
       // Obtener datos del cliente
       const client = clients.find(c => c.id === payment.clientId);
-      
+
+      // Obtener datos de usuarios desde la API
+      const usersResponse = await fetch(`${API_URL}/users`);
+      const usersData = await usersResponse.json();
+      const users = usersData.items || usersData || [];
+
       // Obtener datos del cobrador si existe
       let collector = null;
       if (payment.collectorId) {
-        const users = db.getCollection('users') || [];
         collector = users.find(u => u.id === payment.collectorId);
       }
 
       // Obtener datos del validador (OBLIGATORIO para todos los pagos)
       let validator = null;
       if (payment.validatedBy) {
-        const users = db.getCollection('users') || [];
         validator = users.find(u => u.id === payment.validatedBy);
       }
 
@@ -262,7 +267,7 @@ const PaymentManagement = () => {
         showError('No se puede generar recibo: el pago debe ser validado por un Administrador o Súper administrador');
         return;
       }
-      
+
       // Generar el recibo con firma del validador
       await generatePaymentReceipt(payment, client, collector, validator);
       success('Recibo generado exitosamente con firma del validador');

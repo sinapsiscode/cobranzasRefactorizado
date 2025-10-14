@@ -1,7 +1,7 @@
 // Store de configuraciones del sistema
 import { create } from 'zustand';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const useSettingsStore = create((set, get) => ({
   // Estado de configuración de email

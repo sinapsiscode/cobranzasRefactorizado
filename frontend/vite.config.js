@@ -5,14 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3333,
-    host: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8231',
-        changeOrigin: true,
-        secure: false
-      }
-    }
+    host: true
+    // Proxy deshabilitado - frontend hace peticiones directas al puerto 8231
+    // Si hay problemas de CORS, verifica que el backend tenga CORS habilitado
   },
   resolve: { alias: { '@': '/src' } }
 })

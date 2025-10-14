@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const useUIStore = create(
   persist(

@@ -56,7 +56,7 @@ const ClientManagement = () => {
     isLoading
   } = useClientStore();
   
-  const { getExtendedData, getClientEffectiveCost, loadFromLocalStorage } = useClientExtendedStore();
+  const { getExtendedData, getClientEffectiveCost, fetchExtendedData } = useClientExtendedStore();
   const { getClientSummary } = useMonthlyDebtStore();
   const { payments } = usePaymentStore();
   const { success, error: showError } = useNotificationStore();
@@ -137,7 +137,7 @@ const ClientManagement = () => {
   
   useEffect(() => {
     fetchClients();
-    loadFromLocalStorage(); // Cargar datos extendidos
+    fetchExtendedData(); // Cargar datos extendidos desde JSON Server
     loadNeighborhoods(); // Cargar barrios configurados
   }, []);
 

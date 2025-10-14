@@ -177,12 +177,14 @@ server.get('/api/stats/dashboard', (req, res) => {
     : 0;
 
   res.json({
-    totalCollected,
-    pendingPayments,
-    overduePayments,
-    activeClients,
-    overdueRate: parseFloat(overdueRate),
-    totalClients: clients.length
+    data: {
+      totalCollected,
+      pendingPayments,
+      overduePayments,
+      activeClients,
+      overdueRate: parseFloat(overdueRate),
+      totalClients: clients.length
+    }
   });
 });
 
@@ -433,7 +435,7 @@ server.get('/api/stats/collection-chart', (req, res) => {
     });
   }
 
-  res.json(chartData);
+  res.json({ data: chartData });
 });
 
 // Gráfico de estados de pago
@@ -457,7 +459,7 @@ server.get('/api/stats/payment-status-chart', (req, res) => {
       : 0
   }));
 
-  res.json(chartData);
+  res.json({ data: chartData });
 });
 
 // Validar DNI único (antes de crear/actualizar)
@@ -1109,18 +1111,53 @@ server.get('/api/vouchers/check-operation/:operationNumber', (req, res) => {
 });
 
 // ============================================
-// MIDDLEWARE DE REESCRITURA DE RUTAS
+// MIDDLEWARE DE TRANSFORMACIÓN DE RESPUESTAS DE JSON SERVER
 // ============================================
-server.use(jsonServer.rewriter({
-  '/api/*': '/$1',
-  '/api/clients/:id': '/clients/:id',
-  '/api/payments/:id': '/payments/:id',
-  '/api/users/:id': '/users/:id'
-}));
+// Usar router.render para transformar las respuestas antes de enviarlas
+router.render = (req, res) => {
+  const data = res.locals.data;
+
+  // Detectar rutas REST
+  const isRestRoute = req.path.match(/^\/(clients|payments|users|services|paymentMethods|notifications|cashBoxRequests|clientExtended|receipts|userPreferences|vouchers)/);
+
+  if (isRestRoute) {
+    // GET - lista de recursos
+    if (req.method === 'GET' && Array.isArray(data)) {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 25;
+      const total = data.length;
+      const pages = Math.ceil(total / limit);
+
+      return res.json({
+        items: data,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages,
+          hasNext: page < pages,
+          hasPrev: page > 1
+        }
+      });
+    }
+    // POST, PATCH, PUT, DELETE - objeto único
+    else if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method) && typeof data === 'object' && data !== null) {
+      return res.json({ data });
+    }
+    // GET - objeto único
+    else if (req.method === 'GET' && typeof data === 'object' && data !== null) {
+      return res.json({ data });
+    }
+  }
+
+  // Para otros casos, devolver el dato tal cual
+  res.json(data);
+};
 
 // ============================================
 // USAR EL ROUTER POR DEFECTO
 // ============================================
+// Montar el router en /api para acceder a los recursos REST estándar
 server.use('/api', router);
 
 // ============================================

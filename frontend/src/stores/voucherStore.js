@@ -1,7 +1,7 @@
 // Store de vouchers - subida, validación, gestión
 import { create } from 'zustand';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const useVoucherStore = create((set, get) => ({
   // Estado

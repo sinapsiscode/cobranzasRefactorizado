@@ -18,6 +18,8 @@ import { useServiceStore } from '../../stores/serviceStore';
 import { useAuthStore } from '../../stores/authStore';
 // MIGRADO A JSON SERVER - import eliminado
 
+const API_URL = 'http://localhost:8231/api';
+
 const UserManagement = () => {
   const { user } = useAuthStore();
   const {
@@ -69,9 +71,18 @@ const UserManagement = () => {
     loadNeighborhoods();
   }, []);
 
-  const loadNeighborhoods = () => {
-    const storedNeighborhoods = db.getCollection('neighborhoods') || [];
-    setNeighborhoods(storedNeighborhoods);
+  const loadNeighborhoods = async () => {
+    try {
+      const response = await fetch(`${API_URL}/neighborhoods`);
+      if (!response.ok) {
+        throw new Error('Error al cargar barrios');
+      }
+      const data = await response.json();
+      const storedNeighborhoods = data.items || data || [];
+      setNeighborhoods(storedNeighborhoods);
+    } catch (error) {
+      console.error('Error loading neighborhoods:', error);
+    }
   };
 
   // Filtrar solo clientes creados por este sub-administrador
@@ -121,18 +132,25 @@ const UserManagement = () => {
   };
 
   // Función para validar si el username ya existe
-  const isUsernameAvailable = (username) => {
-    const users = db.getCollection('users') || [];
-    return !users.some(user => user.username === username);
+  const isUsernameAvailable = async (username) => {
+    try {
+      const response = await fetch(`${API_URL}/users`);
+      const data = await response.json();
+      const users = data.items || data || [];
+      return !users.some(user => user.username === username);
+    } catch (error) {
+      console.error('Error checking username availability:', error);
+      return false;
+    }
   };
 
   // Función para generar username único
-  const generateUniqueUsername = (fullName, dni) => {
+  const generateUniqueUsername = async (fullName, dni) => {
     let { username, password } = generateCredentials(fullName, dni);
     let counter = 1;
 
     // Si el username ya existe, agregar un número
-    while (!isUsernameAvailable(username)) {
+    while (!(await isUsernameAvailable(username))) {
       const baseName = username.replace(/\d+$/, '');
       username = `${baseName}${counter}`;
       counter++;
@@ -158,10 +176,11 @@ const UserManagement = () => {
       // Generar credenciales si está habilitado
       let credentials = null;
       if (newClient.generateCredentials) {
-        credentials = generateUniqueUsername(newClient.fullName, newClient.dni);
+        credentials = await generateUniqueUsername(newClient.fullName, newClient.dni);
       } else if (newClient.username && newClient.password) {
         // Verificar que el username manual no exista
-        if (!isUsernameAvailable(newClient.username)) {
+        const isAvailable = await isUsernameAvailable(newClient.username);
+        if (!isAvailable) {
           alert('El nombre de usuario ya existe. Por favor elija otro.');
           return;
         }
@@ -187,7 +206,6 @@ const UserManagement = () => {
 
       // Si se generaron credenciales, crear usuario en el sistema
       if (credentials) {
-        const users = db.getCollection('users') || [];
         const newUser = {
           id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           username: credentials.username,
@@ -200,8 +218,16 @@ const UserManagement = () => {
           createdAt: new Date().toISOString()
         };
 
-        users.push(newUser);
-        db.setCollection('users', users);
+        // Crear usuario en el backend
+        const userResponse = await fetch(`${API_URL}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newUser)
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('Error al crear usuario');
+        }
 
         // Mostrar credenciales generadas
         setGeneratedCredentials({

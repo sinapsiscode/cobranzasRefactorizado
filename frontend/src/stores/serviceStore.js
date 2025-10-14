@@ -4,7 +4,7 @@ import {
   validateService
 } from '../schemas/service.js';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const useServiceStore = create((set, get) => ({
   // Estado
@@ -33,7 +33,8 @@ export const useServiceStore = create((set, get) => ({
         throw new Error(errorData.error || errorData.message || 'Error al cargar servicios');
       }
 
-      const services = await response.json();
+      const data = await response.json();
+      const services = data.items || data || [];
 
       set({
         services,
@@ -94,7 +95,8 @@ export const useServiceStore = create((set, get) => ({
         throw new Error(errorData.error || errorData.message || 'Error al crear servicio');
       }
 
-      const newService = await response.json();
+      const data = await response.json();
+      const newService = data.data || data;
 
       set(state => ({
         services: [...state.services, newService],
@@ -149,7 +151,8 @@ export const useServiceStore = create((set, get) => ({
         throw new Error(errorData.error || errorData.message || 'Error al actualizar servicio');
       }
 
-      const updatedService = await response.json();
+      const data = await response.json();
+      const updatedService = data.data || data;
 
       set(state => ({
         services: state.services.map(service =>
@@ -213,7 +216,9 @@ export const useServiceStore = create((set, get) => ({
   // Funciones de filtrado y búsqueda
   getFilteredServices: () => {
     const { services, filters } = get();
-    let filteredServices = [...services];
+    // Asegurarse de que services es un array
+    const servicesArray = Array.isArray(services) ? services : [];
+    let filteredServices = [...servicesArray];
 
     // Aplicar filtros
     if (filters.search) {
@@ -265,17 +270,20 @@ export const useServiceStore = create((set, get) => ({
 
   getServicesByType: (serviceType) => {
     const { services } = get();
-    return services.filter(service => service.serviceType === serviceType);
+    const servicesArray = Array.isArray(services) ? services : [];
+    return servicesArray.filter(service => service.serviceType === serviceType);
   },
 
   getActiveServices: () => {
     const { services } = get();
-    return services.filter(service => service.isActive);
+    const servicesArray = Array.isArray(services) ? services : [];
+    return servicesArray.filter(service => service.isActive);
   },
 
   getAvailableServices: () => {
     const { services } = get();
-    return services.filter(service => service.isActive && service.isAvailable);
+    const servicesArray = Array.isArray(services) ? services : [];
+    return servicesArray.filter(service => service.isActive && service.isAvailable);
   },
 
   // Gestión de filtros
@@ -315,16 +323,17 @@ export const useServiceStore = create((set, get) => ({
   // Estadísticas
   getServiceStats: () => {
     const { services } = get();
+    const servicesArray = Array.isArray(services) ? services : [];
 
     const stats = {
-      total: services.length,
-      active: services.filter(s => s.isActive).length,
-      inactive: services.filter(s => !s.isActive).length,
-      internet: services.filter(s => s.serviceType === 'internet').length,
-      cable: services.filter(s => s.serviceType === 'cable').length,
-      basic: services.filter(s => s.category === 'basic').length,
-      standard: services.filter(s => s.category === 'standard').length,
-      premium: services.filter(s => s.category === 'premium').length
+      total: servicesArray.length,
+      active: servicesArray.filter(s => s.isActive).length,
+      inactive: servicesArray.filter(s => !s.isActive).length,
+      internet: servicesArray.filter(s => s.serviceType === 'internet').length,
+      cable: servicesArray.filter(s => s.serviceType === 'cable').length,
+      basic: servicesArray.filter(s => s.category === 'basic').length,
+      standard: servicesArray.filter(s => s.category === 'standard').length,
+      premium: servicesArray.filter(s => s.category === 'premium').length
     };
 
     return stats;

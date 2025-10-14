@@ -7,7 +7,7 @@ import {
   RequestStatus
 } from '../schemas/cashBoxRequest';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const useCashBoxStore = create((set, get) => ({
   // Estado
@@ -419,7 +419,8 @@ export const useCashBoxStore = create((set, get) => ({
         throw new Error('Error al cargar solicitudes');
       }
 
-      const requests = await response.json();
+      const data = await response.json();
+      const requests = data.items || data || [];
       set({ cashBoxRequests: requests });
       return requests;
     } catch (error) {

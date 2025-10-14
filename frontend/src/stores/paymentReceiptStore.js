@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:8231/api';
 
 export const usePaymentReceiptStore = create((set, get) => ({
   // Estado

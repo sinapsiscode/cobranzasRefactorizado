@@ -18,12 +18,12 @@ import { getTarifaLabel, getTarifaColor } from '../../schemas/clientExtended';
 
 const ExtendedClientData = () => {
   const { clients, fetchClients } = useClientStore();
-  const { 
-    getExtendedData, 
-    setExtendedData, 
-    updateExtendedData, 
+  const {
+    getExtendedData,
+    setExtendedData,
+    updateExtendedData,
     getExtendedStats,
-    loadFromLocalStorage 
+    fetchExtendedData
   } = useClientExtendedStore();
   const { success, error: showError } = useNotificationStore();
   
@@ -35,7 +35,7 @@ const ExtendedClientData = () => {
   
   useEffect(() => {
     fetchClients();
-    loadFromLocalStorage();
+    fetchExtendedData();
   }, []);
   
   // Filtrar clientes

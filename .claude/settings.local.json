@@ -7,7 +7,12 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(curl:*)",
+      "Bash(dir server.js)",
+      "Bash(while read file)",
+      "Bash(do sed -i \"s|const API_URL = ''''/api'''';|const API_URL = ''''http://localhost:8231/api'''';|g\" \"$file\")",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
