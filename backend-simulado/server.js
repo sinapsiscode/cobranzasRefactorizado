@@ -182,6 +182,8 @@ server.get('/api/stats/dashboard', (req, res) => {
       pendingPayments,
       overduePayments,
       activeClients,
+      currentClients: activeClients, // Alias para compatibilidad con el frontend
+      clientesActivos: activeClients, // Alias para compatibilidad con subadmin
       overdueRate: parseFloat(overdueRate),
       totalClients: clients.length
     }

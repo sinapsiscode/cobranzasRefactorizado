@@ -6996,12 +6996,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-17",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:26:51.091Z"
     },
     {
       "id": "payment-client-003-2025-04",
@@ -7780,12 +7781,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-28",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:26:51.949Z"
     },
     {
       "id": "payment-client-010-2025-04",
@@ -8020,12 +8022,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-15",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": "Pago registrado por cobrador",
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:26:54.062Z"
     },
     {
       "id": "payment-client-013-2025-04",
@@ -9301,12 +9304,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-17",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:26:55.576Z"
     },
     {
       "id": "payment-client-025-2025-07",
@@ -10405,12 +10409,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-28",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:26:57.099Z"
     },
     {
       "id": "payment-client-036-2025-04",
@@ -10517,12 +10522,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-15",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:26:57.620Z"
     },
     {
       "id": "payment-client-037-2025-04",
@@ -11061,12 +11067,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-21",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:00.154Z"
     },
     {
       "id": "payment-client-042-2025-04",
@@ -12071,12 +12078,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-27",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:01.938Z"
     },
     {
       "id": "payment-client-051-2025-04",
@@ -12743,12 +12751,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-26",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:02.399Z"
     },
     {
       "id": "payment-client-057-2025-04",
@@ -12967,12 +12976,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-17",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:04.787Z"
     },
     {
       "id": "payment-client-059-2025-04",
@@ -13079,12 +13089,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-19",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:06.198Z"
     },
     {
       "id": "payment-client-060-2025-05",
@@ -13399,12 +13410,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-28",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:08.079Z"
     },
     {
       "id": "payment-client-063-2025-04",
@@ -13623,12 +13635,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-17",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:09.570Z"
     },
     {
       "id": "payment-client-065-2025-04",
@@ -14327,12 +14340,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-25",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:11.424Z"
     },
     {
       "id": "payment-client-072-2025-07",
@@ -14503,12 +14517,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-27",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:12.948Z"
     },
     {
       "id": "payment-client-074-2025-09",
@@ -14759,12 +14774,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-23",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": "Pago registrado por cobrador",
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:14.737Z"
     },
     {
       "id": "payment-client-077-2025-04",
@@ -17064,12 +17080,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-20",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": "Pago registrado por cobrador",
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:16.626Z"
     },
     {
       "id": "payment-client-100-2025-04",
@@ -17449,12 +17466,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-28",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:18.344Z"
     },
     {
       "id": "payment-client-104-2025-05",
@@ -18393,12 +18411,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-15",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:19.091Z"
     },
     {
       "id": "payment-client-115-2025-04",
@@ -19673,12 +19692,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-14",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-10-14T07:26:51.006Z"
     },
     {
       "id": "payment-client-127-2025-04",
@@ -20009,12 +20029,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-25",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": "Pago registrado por cobrador",
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:20.389Z"
     },
     {
       "id": "payment-client-130-2025-04",
@@ -20377,12 +20398,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-18",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:21.726Z"
     },
     {
       "id": "payment-client-134-2025-04",
@@ -20489,12 +20511,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-22",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": "Pago registrado por cobrador",
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:24.379Z"
     },
     {
       "id": "payment-client-135-2025-04",
@@ -20825,12 +20848,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-22",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": "Pago registrado por cobrador",
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:25.915Z"
     },
     {
       "id": "payment-client-138-2025-04",
@@ -21161,12 +21185,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-20",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:27.799Z"
     },
     {
       "id": "payment-client-141-2025-04",
@@ -21833,12 +21858,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-18",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:29.366Z"
     },
     {
       "id": "payment-client-148-2025-04",
@@ -22057,12 +22083,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-20",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": "Pago registrado por cobrador",
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:30.956Z"
     },
     {
       "id": "payment-client-150-2025-04",
@@ -24794,12 +24821,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-18",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:31.355Z"
     },
     {
       "id": "payment-client-176-2025-04",
@@ -26043,12 +26071,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-14",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": "Pago registrado por cobrador",
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-10-14T07:26:52.155Z"
     },
     {
       "id": "payment-client-188-2025-06",
@@ -26843,12 +26872,13 @@
       "billingType": "normal",
       "dueDate": "2025-10-23",
       "paymentDate": null,
-      "status": "pending",
+      "status": "overdue",
       "paymentMethod": null,
       "voucherUrl": null,
       "comments": null,
       "month": "2025-10",
-      "year": 2025
+      "year": 2025,
+      "updatedAt": "2025-11-14T21:27:32.935Z"
     },
     {
       "id": "payment-client-197-2025-04",

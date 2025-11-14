@@ -12,7 +12,8 @@
       "Bash(dir server.js)",
       "Bash(while read file)",
       "Bash(do sed -i \"s|const API_URL = ''''/api'''';|const API_URL = ''''http://localhost:8231/api'''';|g\" \"$file\")",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
