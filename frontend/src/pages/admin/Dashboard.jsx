@@ -465,12 +465,12 @@ const AdminDashboard = () => {
             <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <BarChart data={displayChartData.collection}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" tick={{ fill: '#666' }} />
+                <XAxis dataKey="monthName" tick={{ fill: '#666', fontSize: 12 }} />
                 <YAxis tick={{ fill: '#666' }} />
-                <Tooltip 
-                  formatter={(value) => [`S/ ${value.toLocaleString()}`, 'Monto']}
+                <Tooltip
+                  formatter={(value) => [`S/ ${value.toLocaleString()}`, 'Recaudado']}
                 />
-                <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="collected" fill="#3B82F6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

@@ -168,8 +168,9 @@ server.get('/api/stats/dashboard', (req, res) => {
     .filter(p => p.status === 'paid')
     .reduce((sum, p) => sum + p.amount, 0);
 
-  const pendingPayments = payments.filter(p => p.status === 'pending').length;
+  const strictPendingPayments = payments.filter(p => p.status === 'pending').length;
   const overduePayments = payments.filter(p => p.status === 'overdue').length;
+  const pendingPayments = strictPendingPayments + overduePayments; // Total de pagos sin pagar
   const activeClients = clients.filter(c => c.status === 'active').length;
 
   const overdueRate = payments.length > 0
@@ -179,13 +180,15 @@ server.get('/api/stats/dashboard', (req, res) => {
   res.json({
     data: {
       totalCollected,
-      pendingPayments,
-      overduePayments,
+      pendingPayments, // Total de pagos pendientes (pending + overdue)
+      strictPendingPayments, // Solo pagos en estado "pending"
+      overduePayments, // Solo pagos en estado "overdue"
       activeClients,
       currentClients: activeClients, // Alias para compatibilidad con el frontend
       clientesActivos: activeClients, // Alias para compatibilidad con subadmin
       overdueRate: parseFloat(overdueRate),
-      totalClients: clients.length
+      totalClients: clients.length,
+      pagosPendientes: pendingPayments // Alias para compatibilidad con subadmin
     }
   });
 });
