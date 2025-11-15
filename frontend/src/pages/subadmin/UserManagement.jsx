@@ -66,7 +66,8 @@ const UserManagement = () => {
   });
 
   useEffect(() => {
-    fetchClients();
+    // Cargar TODOS los clientes sin límite
+    fetchClients({ limit: 999999 });
     fetchServices();
     loadNeighborhoods();
   }, []);
@@ -85,7 +86,7 @@ const UserManagement = () => {
     }
   };
 
-  // Filtrar solo clientes creados por este sub-administrador
+  // Obtener clientes con filtros aplicados
   const getMyClients = () => {
     let filteredClients = [...clients];
 
@@ -107,8 +108,8 @@ const UserManagement = () => {
       filteredClients = filteredClients.filter(client => client.neighborhood === filters.neighborhood);
     }
 
-    // Filtrar solo clientes creados por este sub-administrador
-    return filteredClients.filter(client => client.createdBy === user?.id);
+    // MOSTRAR TODOS LOS CLIENTES (sin filtrar por createdBy)
+    return filteredClients;
   };
 
   // Función para generar credenciales automáticamente

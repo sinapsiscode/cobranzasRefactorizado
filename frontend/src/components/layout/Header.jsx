@@ -1,30 +1,17 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
-import { useNotificationStore } from '../../stores/notificationStore';
-import { 
-  Menu, 
-  Bell, 
-  Search, 
-  Settings,
-  User,
+import {
+  Menu,
   LogOut
 } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 const Header = ({ isMobile = false }) => {
+  const location = useLocation();
   const { user, logout } = useAuthStore();
-  const { 
-    setSidebarOpen, 
-    toggleGlobalSearch, 
-    globalSearch 
-  } = useUIStore();
-  const { 
-    getNotificationCount, 
-    getUnreadCount 
-  } = useNotificationStore();
-
-  const notificationCount = getUnreadCount();
+  const { setSidebarOpen } = useUIStore();
 
   const handleLogout = async () => {
     try {
@@ -65,27 +52,6 @@ const Header = ({ isMobile = false }) => {
 
         {/* Lado derecho */}
         <div className="flex items-center space-x-1 sm:space-x-2">
-          
-          {/* Búsqueda global (solo desktop) */}
-          {!isMobile && (
-            <button
-              onClick={toggleGlobalSearch}
-              className="p-2 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 relative"
-              title="Buscar (Ctrl+K)"
-            >
-              <Search className="h-5 w-5" />
-            </button>
-          )}
-
-          {/* Notificaciones */}
-          <button className="p-1.5 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 relative sm:p-2">
-            <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-            {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                {notificationCount > 9 ? '9+' : notificationCount}
-              </span>
-            )}
-          </button>
 
           {/* Perfil de usuario */}
           <div className="relative group">
@@ -121,19 +87,7 @@ const Header = ({ isMobile = false }) => {
 
                 {/* Opciones del menú */}
                 <div className="py-1">
-                  <button className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    <User className="h-4 w-4 mr-3" />
-                    Mi Perfil
-                  </button>
-                  
-                  <button className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    <Settings className="h-4 w-4 mr-3" />
-                    Configuración
-                  </button>
-                  
-                  <div className="border-t border-gray-100 my-1"></div>
-                  
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
@@ -146,25 +100,6 @@ const Header = ({ isMobile = false }) => {
           </div>
         </div>
       </div>
-
-      {/* Barra de búsqueda global */}
-      {globalSearch.isOpen && !isMobile && (
-        <div className="absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40">
-          <div className="px-4 py-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar clientes, pagos..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                value={globalSearch.query}
-                onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                autoFocus
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 };

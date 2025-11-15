@@ -63,7 +63,7 @@ const UserManagement = () => {
     setLoading(true);
     try {
       // Fetch all users from API
-      const usersResponse = await fetch(`${API_URL}/users`);
+      const usersResponse = await fetch(`${API_URL}/users?limit=999999`);
       if (!usersResponse.ok) {
         throw new Error('Error al cargar usuarios');
       }
@@ -71,14 +71,19 @@ const UserManagement = () => {
       const allUsers = usersData.items || usersData;
 
       // Fetch all payments from API
-      const paymentsResponse = await fetch(`${API_URL}/payments`);
+      const paymentsResponse = await fetch(`${API_URL}/payments?limit=999999`);
       const paymentsData = await paymentsResponse.json();
       const allPayments = paymentsData.items || paymentsData;
 
-      // Fetch all clients from API (only if needed)
-      const clientsResponse = await fetch(`${API_URL}/clients`);
+      // Fetch all clients from API
+      const clientsResponse = await fetch(`${API_URL}/clients?limit=999999`);
       const clientsData = await clientsResponse.json();
       const allClients = clientsData.items || clientsData;
+
+      console.log('=== USER MANAGEMENT DEBUG ===');
+      console.log('Total users from API:', allUsers.length);
+      console.log('Total clients from API:', allClients.length);
+      console.log('Total payments from API:', allPayments.length);
 
       // Agregar estadísticas para cada usuario
       const usersWithStats = allUsers.map(user => {
@@ -114,7 +119,38 @@ const UserManagement = () => {
         return { ...user, stats };
       });
 
-      setUsers(usersWithStats);
+      // Convertir clientes de la tabla clients a formato de usuario
+      const clientsAsUsers = allClients.map(client => {
+        const clientPayments = allPayments.filter(p => p.clientId === client.id);
+
+        return {
+          id: client.id,
+          username: client.dni || client.id,
+          email: client.email || '',
+          fullName: client.fullName,
+          phone: client.phone || '',
+          role: 'client',
+          isActive: client.isActive,
+          createdAt: client.installationDate || client.createdAt,
+          stats: {
+            totalPayments: clientPayments.length,
+            paidPayments: clientPayments.filter(p => p.status === 'paid' || p.status === 'validated').length,
+            pendingPayments: clientPayments.filter(p => p.status === 'pending').length,
+            overduePayments: clientPayments.filter(p => p.status === 'overdue').length
+          },
+          _isFromClientsTable: true // Flag para saber que viene de la tabla clients
+        };
+      });
+
+      // Combinar usuarios y clientes
+      const allCombined = [...usersWithStats, ...clientsAsUsers];
+
+      console.log('Users with stats:', usersWithStats.length);
+      console.log('Clients as users:', clientsAsUsers.length);
+      console.log('Total combined:', allCombined.length);
+      console.log('Sample client as user:', clientsAsUsers[0]);
+
+      setUsers(allCombined);
     } catch (error) {
       console.error('Error loading users:', error);
       showError('Error al cargar los usuarios');
@@ -128,17 +164,27 @@ const UserManagement = () => {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.username.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm ||
+                         (user.fullName || '').toLowerCase().includes(searchLower) ||
+                         (user.email || '').toLowerCase().includes(searchLower) ||
+                         (user.username || '').toLowerCase().includes(searchLower) ||
+                         (user.phone || '').toLowerCase().includes(searchLower);
+
     const matchesRole = !roleFilter || user.role === roleFilter;
-    const matchesStatus = !statusFilter || 
+    const matchesStatus = !statusFilter ||
                          (statusFilter === 'active' && user.isActive) ||
                          (statusFilter === 'inactive' && !user.isActive);
-    
+
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  console.log('=== FILTER DEBUG ===');
+  console.log('Total users:', users.length);
+  console.log('Filtered users:', filteredUsers.length);
+  console.log('Role filter:', roleFilter);
+  console.log('Status filter:', statusFilter);
+  console.log('Search term:', searchTerm);
 
   const handleAddUser = () => {
     setFormData({
@@ -569,27 +615,36 @@ const UserManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => handleToggleStatus(user)}
-                            className={`${user.isActive ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
-                            title={user.isActive ? 'Desactivar' : 'Activar'}
-                          >
-                            {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                          </button>
-                          <button
-                            onClick={() => handleEditUser(user)}
-                            className="text-gray-600 hover:text-gray-900"
-                            title="Editar"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {!user._isFromClientsTable && (
+                            <>
+                              <button
+                                onClick={() => handleToggleStatus(user)}
+                                className={`${user.isActive ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
+                                title={user.isActive ? 'Desactivar' : 'Activar'}
+                              >
+                                {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                              </button>
+                              <button
+                                onClick={() => handleEditUser(user)}
+                                className="text-gray-600 hover:text-gray-900"
+                                title="Editar"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(user)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
+                          {user._isFromClientsTable && (
+                            <span className="text-xs text-gray-500 italic">
+                              Gestionar en Clientes
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -60,6 +60,30 @@
       "role": "client",
       "phone": "+51987654325",
       "isActive": true
+    },
+    {
+      "id": "user-1763174403971-bk4jo3lse",
+      "username": "asf",
+      "password": "asf",
+      "role": "client",
+      "clientId": "Ya8FnSC",
+      "fullName": "asdasd",
+      "isActive": true,
+      "createdBy": "subadmin-1",
+      "createdAt": "2025-11-15T02:40:03.971Z"
+    },
+    {
+      "id": "collector-1",
+      "username": "cobrador1",
+      "password": "cobrador123",
+      "email": "cobrador1@tvcable.com",
+      "fullName": "Cobrador Principal",
+      "role": "collector",
+      "phone": "+51987654322",
+      "startDate": "2023-02-01",
+      "isActive": true,
+      "createdAt": "2025-11-15T03:05:26.000Z",
+      "updatedAt": "2025-11-15T03:05:26.000Z"
     }
   ],
   "clients": [
@@ -921,6 +945,24 @@
       "preservedDebts": [],
       "lastLogin": null,
       "reactivationDate": null
+    },
+    {
+      "fullName": "asdasd",
+      "dni": "77091213",
+      "phone": "987634234",
+      "address": "asfasfasf",
+      "neighborhood": "KAZEKAGUE",
+      "serviceId": "zpoPj0-",
+      "price": 34,
+      "installationDate": "2025-11-15",
+      "status": "active",
+      "notes": "asffa",
+      "username": "asf",
+      "password": "asf",
+      "createdBy": "subadmin-1",
+      "role": "client",
+      "isActive": true,
+      "id": "Ya8FnSC"
     },
     {
       "id": "client-028",
@@ -27329,6 +27371,62 @@
       "month": "2024-10",
       "year": 2024,
       "id": "pwG65UU"
+    },
+    {
+      "clientId": "client-127",
+      "serviceType": "cable",
+      "amount": 120,
+      "dueDate": "2024-11-26T05:00:00.000Z",
+      "paymentDate": "2025-11-15",
+      "status": "collected",
+      "paymentMethod": "transfer",
+      "comments": "asdfaf",
+      "collectorId": "collector-1",
+      "month": "2024-11",
+      "year": 2024,
+      "id": "CgxStn-"
+    },
+    {
+      "clientId": "client-127",
+      "serviceType": "cable",
+      "amount": 120,
+      "dueDate": "2024-12-26T05:00:00.000Z",
+      "paymentDate": "2025-11-15",
+      "status": "collected",
+      "paymentMethod": "transfer",
+      "comments": "asf",
+      "collectorId": "collector-1",
+      "month": "2024-12",
+      "year": 2024,
+      "id": "-py3d45"
+    },
+    {
+      "clientId": "client-127",
+      "serviceType": "cable",
+      "amount": 60,
+      "dueDate": "2025-08-23T05:00:00.000Z",
+      "status": "partial",
+      "paymentMethod": "cash",
+      "comments": "asfaf",
+      "collectorId": "collector-1",
+      "month": "2025-08",
+      "year": 2025,
+      "isAdvancePayment": false,
+      "id": "2g6DYka"
+    },
+    {
+      "clientId": "client-133",
+      "serviceType": "cable",
+      "amount": 20,
+      "dueDate": "2025-10-18T05:00:00.000Z",
+      "status": "partial",
+      "paymentMethod": "transfer",
+      "comments": "asf",
+      "collectorId": "collector-1",
+      "month": "2025-10",
+      "year": 2025,
+      "isAdvancePayment": false,
+      "id": "2t2Y8rD"
     }
   ],
   "services": [
@@ -29874,7 +29972,7 @@
     "enableNotifications": true,
     "enableEmailNotifications": false,
     "autoSuspendAfterDays": 30,
-    "updatedAt": "2025-11-15T01:58:13.266Z",
+    "updatedAt": "2025-11-15T02:38:19.693Z",
     "basePrices": {
       "internet": 50,
       "cable": 35,
@@ -29882,7 +29980,8 @@
     },
     "neighborhoods": [
       "San Juan",
-      "KONOHA"
+      "KONOHA",
+      "KAZEKAGUE"
     ]
   },
   "clientExtended": [],

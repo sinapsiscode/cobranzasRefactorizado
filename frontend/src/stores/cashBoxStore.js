@@ -153,8 +153,23 @@ export const useCashBoxStore = create((set, get) => ({
         gastos: [...currentCashBox.gastos, newExpense]
       };
 
-      // Keep in memory/state
-      set({ currentCashBox: updatedCashBox });
+      // Persistir en el backend
+      const response = await fetch(`${API_URL}/cash-boxes/${currentCashBox.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedCashBox),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar el gasto');
+      }
+
+      const savedCashBox = await response.json();
+
+      // Actualizar estado local
+      set({ currentCashBox: savedCashBox });
 
       return newExpense;
     } catch (error) {
