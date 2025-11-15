@@ -238,30 +238,6 @@ const CashBoxSupervisor = () => {
         
         <div className="flex items-center space-x-3">
           <button
-            onClick={async () => {
-              try {
-                console.log('🔄 Cargando datos de simulación...');
-                const result = await loadSimulationData();
-                console.log('📊 Resultado carga simulación:', result);
-                
-                if (result) {
-                  await loadData(); // Recargar datos después de cargar simulación
-                  success('Datos de demostración cargados correctamente');
-                } else {
-                  showError('Error al cargar datos de demostración');
-                }
-              } catch (error) {
-                console.error('❌ Error:', error);
-                showError('Error al cargar datos de demostración');
-              }
-            }}
-            className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            <CheckCircle className="h-4 w-4" />
-            <span>Cargar Demo</span>
-          </button>
-          
-          <button
             onClick={loadData}
             disabled={refreshing}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"

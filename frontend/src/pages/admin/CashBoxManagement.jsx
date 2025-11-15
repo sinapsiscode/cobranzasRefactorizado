@@ -84,15 +84,34 @@ const CashBoxManagement = () => {
     setLoading(true);
     try {
       // Cargar gastos
-      const expensesResponse = await fetch(`${API_URL}/expenses`);
-      const expensesData = await expensesResponse.json();
-      setExpenses(expensesData.items || expensesData || []);
+      try {
+        const expensesResponse = await fetch(`${API_URL}/expenses`);
+        if (expensesResponse.ok) {
+          const expensesData = await expensesResponse.json();
+          const expensesArray = Array.isArray(expensesData) ? expensesData : (expensesData.items || []);
+          setExpenses(expensesArray);
+        } else {
+          setExpenses([]);
+        }
+      } catch (expError) {
+        console.error('Error loading expenses:', expError);
+        setExpenses([]);
+      }
 
       // Cargar pagos (ingresos)
-      const paymentsResponse = await fetch(`${API_URL}/payments`);
-      const paymentsData = await paymentsResponse.json();
-      const allPayments = paymentsData.items || paymentsData || [];
-      setPayments(allPayments.filter(p => p.status === 'paid' || p.status === 'validated'));
+      try {
+        const paymentsResponse = await fetch(`${API_URL}/payments`);
+        if (paymentsResponse.ok) {
+          const paymentsData = await paymentsResponse.json();
+          const allPayments = Array.isArray(paymentsData) ? paymentsData : (paymentsData.items || []);
+          setPayments(allPayments.filter(p => p.status === 'paid' || p.status === 'validated'));
+        } else {
+          setPayments([]);
+        }
+      } catch (payError) {
+        console.error('Error loading payments:', payError);
+        setPayments([]);
+      }
     } catch (error) {
       console.error('Error loading cash flow data:', error);
       showError('Error al cargar datos del flujo de caja');
@@ -185,7 +204,7 @@ const CashBoxManagement = () => {
   };
 
   // Filtrar gastos según criterios
-  const filteredExpenses = expenses.filter(expense => {
+  const filteredExpenses = (Array.isArray(expenses) ? expenses : []).filter(expense => {
     const matchesSearch = expense.concept.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expense.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expense.supplier?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -197,7 +216,7 @@ const CashBoxManagement = () => {
   });
 
   // Filtrar ingresos según criterios
-  const filteredPayments = payments.filter(payment => {
+  const filteredPayments = (Array.isArray(payments) ? payments : []).filter(payment => {
     const matchesDateRange = (!filterDateFrom || payment.paymentDate >= filterDateFrom) &&
                             (!filterDateTo || payment.paymentDate <= filterDateTo);
 

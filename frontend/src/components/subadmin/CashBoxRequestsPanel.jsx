@@ -125,26 +125,6 @@ const CashBoxRequestsPanel = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <button
-            onClick={async () => {
-              try {
-                const result = await loadSimulationData();
-
-                if (result) {
-                  success('Datos de demostración cargados correctamente');
-                } else {
-                  showError('Error al cargar datos de demostración');
-                }
-              } catch (error) {
-                showError('Error al cargar datos de demostración');
-              }
-            }}
-            className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span>Cargar Demo</span>
-          </button>
-          
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value)}

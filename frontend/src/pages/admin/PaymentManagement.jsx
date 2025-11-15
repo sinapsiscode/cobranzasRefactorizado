@@ -352,6 +352,9 @@ const PaymentManagement = () => {
 
   const handlePrintReceipt = async (payment) => {
     try {
+      console.log('DEBUG - currentUser desde hook:', currentUser);
+      console.log('DEBUG - currentUser.role:', currentUser?.role);
+
       // Obtener datos del cliente
       const client = clients.find(c => c.id === payment.clientId);
 
@@ -371,6 +374,9 @@ const PaymentManagement = () => {
       if (payment.validatedBy) {
         validator = users.find(u => u.id === payment.validatedBy);
       }
+
+      console.log('DEBUG - validator encontrado:', validator);
+      console.log('DEBUG - currentUser para auto-validar:', currentUser);
 
       // Si el pago no está validado y el usuario actual es admin/superadmin, auto-validar
       if (!validator && currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin')) {

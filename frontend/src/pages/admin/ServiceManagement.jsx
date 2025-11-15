@@ -63,6 +63,7 @@ const ServiceManagement = () => {
     name: 'internet', // Ahora será: internet, cable, duo
     description: '',
     serviceType: 'plan_hogar', // Ahora será: plan_hogar, plan_corporativo, plan_negocio
+    category: 'standard', // Categoría por defecto
     price: 0,
     features: {
       speed: '',
@@ -85,13 +86,13 @@ const ServiceManagement = () => {
     loadServicePrices();
   }, []);
   
-  const loadServicePrices = () => {
-    const prices = getBasePrices();
+  const loadServicePrices = async () => {
+    const prices = await getBasePrices();
     setServicePrices(prices);
   };
-  
-  const saveServicePrices = () => {
-    const success = saveBasePrices(servicePrices);
+
+  const saveServicePrices = async () => {
+    const success = await saveBasePrices(servicePrices);
     if (success) {
       alert('Precios actualizados correctamente. Los cambios se aplicarán automáticamente en todo el sistema.');
       setShowPriceModal(false);
@@ -135,7 +136,8 @@ const ServiceManagement = () => {
       name: 'internet', // Ahora será: internet, cable, duo
       description: '',
       serviceType: 'plan_hogar', // Ahora será: plan_hogar, plan_corporativo, plan_negocio
-        price: 0,
+      category: 'standard', // Categoría por defecto
+      price: 0,
       features: {
         speed: '',
         bandwidth: '',
@@ -473,6 +475,21 @@ const ServiceManagement = () => {
                   </select>
                 </div>
 
+                {/* Categoría del Servicio */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Categoría *
+                  </label>
+                  <select
+                    value={newService.category}
+                    onChange={(e) => setNewService(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="basic">Básico</option>
+                    <option value="standard">Estándar</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -741,6 +758,21 @@ const ServiceManagement = () => {
                   </select>
                 </div>
 
+                {/* Categoría del Servicio */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Categoría *
+                  </label>
+                  <select
+                    value={selectedService.category || 'standard'}
+                    onChange={(e) => setSelectedService(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="basic">Básico</option>
+                    <option value="standard">Estándar</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

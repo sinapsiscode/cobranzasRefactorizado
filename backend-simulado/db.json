@@ -27376,6 +27376,29 @@
         "Soporte técnico 24/7"
       ],
       "createdAt": "2023-01-01T00:00:00.000Z"
+    },
+    {
+      "name": "cable",
+      "description": "asfasfasf",
+      "serviceType": "plan_negocio",
+      "category": "standard",
+      "price": 34,
+      "features": {
+        "speed": "",
+        "bandwidth": "",
+        "channels": 3,
+        "extras": [
+          "33"
+        ]
+      },
+      "isActive": true,
+      "isAvailable": true,
+      "installationFee": 4,
+      "contractDuration": 12,
+      "createdBy": "admin-1",
+      "createdAt": "2025-11-15T02:21:19.132Z",
+      "updatedAt": "2025-11-15T02:21:19.132Z",
+      "id": "zpoPj0-"
     }
   ],
   "paymentMethods": [
@@ -27435,7 +27458,7 @@
       "collectorName": "Carlos García Pérez",
       "requestDate": "2025-10-09T17:42:41.381Z",
       "workDate": "2025-10-09",
-      "status": "pending",
+      "status": "approved",
       "requestedInitialCash": {
         "efectivo": 100,
         "digital": {
@@ -27445,12 +27468,20 @@
           "otros": 0
         }
       },
-      "approvedInitialCash": null,
+      "approvedInitialCash": {
+        "efectivo": 100,
+        "digital": {
+          "yape": 0,
+          "plin": 0,
+          "transferencia": 0,
+          "otros": 0
+        }
+      },
       "notes": "Solicitud de caja para jornada de cobranza",
       "createdAt": "2025-10-09T17:42:41.381Z",
-      "updatedAt": "2025-10-09T17:42:41.381Z",
-      "approvedBy": null,
-      "approvedAt": null
+      "updatedAt": "2025-11-15T01:57:27.273Z",
+      "approvedBy": "admin-1",
+      "approvedAt": "2025-11-15T01:57:27.273Z"
     }
   ],
   "notifications": [
@@ -29843,11 +29874,11 @@
     "enableNotifications": true,
     "enableEmailNotifications": false,
     "autoSuspendAfterDays": 30,
-    "updatedAt": "2025-11-14T22:58:35.508Z",
+    "updatedAt": "2025-11-15T01:58:13.266Z",
     "basePrices": {
       "internet": 50,
-      "cable": 40,
-      "duo": 80
+      "cable": 35,
+      "duo": 34
     },
     "neighborhoods": [
       "San Juan",
@@ -29856,5 +29887,6 @@
   },
   "clientExtended": [],
   "receipts": [],
-  "userPreferences": []
+  "userPreferences": [],
+  "expenses": []
 }
