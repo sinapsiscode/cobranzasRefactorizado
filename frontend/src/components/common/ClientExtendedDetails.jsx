@@ -351,7 +351,7 @@ const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) =
                     <div className={`rounded-lg p-3 border ${debtSummary?.monthsOwed > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
                       <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Deuda Total</label>
                       <p className={`text-xl font-bold ${debtSummary?.monthsOwed > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        S/. {debtSummary?.balance?.toFixed(2) || '0.00'}
+                        S/. {(typeof debtSummary?.balance === 'number' && !isNaN(debtSummary.balance)) ? debtSummary.balance.toFixed(2) : '0.00'}
                       </p>
                     </div>
                   </div>

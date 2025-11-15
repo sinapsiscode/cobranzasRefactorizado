@@ -1007,7 +1007,7 @@ const ClientManagement = () => {
                               <div className="flex items-center justify-center">
                                 <DollarSign className="h-3 w-3 text-red-500 mr-1" />
                                 <span className="text-red-600 font-semibold text-xs">
-                                  S/. {debtSummary.balance?.toFixed(0) || '0'}
+                                  S/. {(typeof debtSummary.balance === 'number' && !isNaN(debtSummary.balance)) ? debtSummary.balance.toFixed(0) : '0'}
                                 </span>
                               </div>
                               <span className="text-xs text-gray-500">

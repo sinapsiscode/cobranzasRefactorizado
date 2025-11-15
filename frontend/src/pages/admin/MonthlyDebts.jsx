@@ -26,12 +26,13 @@ import { exportMonthlyDebtMatrixToExcel } from '../../utils/excelExport';
 
 const MonthlyDebts = () => {
   const { clients, fetchClients } = useClientStore();
-  const { 
-    getClientDebts, 
-    getClientSummary, 
-    getGlobalStats, 
+  const {
+    fetchDebts,
+    getClientDebts,
+    getClientSummary,
+    getGlobalStats,
     updateDebt,
-    registerPayment 
+    registerPayment
   } = useMonthlyDebtStore();
   const { createPayment } = usePaymentStore();
   const { user } = useAuthStore();
@@ -46,6 +47,7 @@ const MonthlyDebts = () => {
   // Estados para modales
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showPaymentDetailModal, setShowPaymentDetailModal] = useState(false);
+  const [showMonthlyDetailsModal, setShowMonthlyDetailsModal] = useState(false);
   const [selectedDebt, setSelectedDebt] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [paymentFormData, setPaymentFormData] = useState({
@@ -57,9 +59,10 @@ const MonthlyDebts = () => {
   
   // Estado para forzar re-render cuando cambien los precios
   const [priceUpdateTrigger, setPriceUpdateTrigger] = useState(0);
-  
+
   useEffect(() => {
     fetchClients();
+    fetchDebts(); // Cargar deudas mensuales desde el API
   }, []);
   
   // Escuchar cambios en precios base para actualización en tiempo real
@@ -120,10 +123,10 @@ const MonthlyDebts = () => {
       setSelectedClient(client);
       setSelectedDebt(monthDebt);
       // Calcular monto basado en el servicio del cliente y precios actualizados
-      const clientServicePrice = client.serviceType ? 
+      const clientServicePrice = client.serviceType ?
         calculateServicePrice(client.serviceType, client.servicePlan || 'standard') :
         monthDebt.amountDue || 0;
-      
+
       setPaymentFormData({
         amount: clientServicePrice.toString(),
         paymentMethod: 'efectivo',
@@ -132,6 +135,12 @@ const MonthlyDebts = () => {
       });
       setShowPaymentModal(true);
     }
+  };
+
+  // Manejar vista de detalles mensuales
+  const handleViewMonthlyDetails = (client) => {
+    setSelectedClient(client);
+    setShowMonthlyDetailsModal(true);
   };
 
   // Manejar cambios en formulario de pago
@@ -262,7 +271,7 @@ const MonthlyDebts = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Monto Adeudado</p>
-              <p className="text-2xl font-bold text-red-600">S/. {globalStats.totalOwed?.toFixed(0)}</p>
+              <p className="text-2xl font-bold text-red-600">S/. {(typeof globalStats.totalOwed === 'number' && !isNaN(globalStats.totalOwed)) ? globalStats.totalOwed.toFixed(0) : '0'}</p>
             </div>
             <DollarSign className="h-8 w-8 text-red-600 opacity-20" />
           </div>
@@ -466,7 +475,7 @@ const MonthlyDebts = () => {
                         <span className={`text-sm font-semibold ${
                           summary.balance > 0 ? 'text-red-600' : 'text-green-600'
                         }`}>
-                          S/. {summary.balance?.toFixed(2) || '0.00'}
+                          S/. {(typeof summary.balance === 'number' && !isNaN(summary.balance)) ? summary.balance.toFixed(2) : '0.00'}
                         </span>
                       </td>
                       
@@ -497,6 +506,7 @@ const MonthlyDebts = () => {
                       
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
+                          onClick={() => handleViewMonthlyDetails(client)}
                           className="text-blue-600 hover:text-blue-900"
                           title="Ver detalles mensuales"
                         >
@@ -622,7 +632,7 @@ const MonthlyDebts = () => {
                       <span className={`text-sm font-semibold ${
                         summary.balance > 0 ? 'text-red-600' : 'text-green-600'
                       }`}>
-                        S/. {summary.balance?.toFixed(0) || '0'}
+                        S/. {(typeof summary.balance === 'number' && !isNaN(summary.balance)) ? summary.balance.toFixed(0) : '0'}
                       </span>
                     </td>
                   </tr>
@@ -859,6 +869,185 @@ const MonthlyDebts = () => {
                   Cerrar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para ver detalles mensuales del cliente */}
+      {showMonthlyDetailsModal && selectedClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Detalles Mensuales - {selectedClient.fullName}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    DNI: {selectedClient.dni} | Plan: {selectedClient.servicePlan || 'N/A'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowMonthlyDetailsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenido del modal con scroll */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Resumen del cliente */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                {(() => {
+                  const summary = getClientSummary(selectedClient.id);
+                  return (
+                    <>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-xs text-blue-600 font-medium uppercase mb-1">Meses Adeudados</p>
+                        <p className="text-2xl font-bold text-blue-700">{summary.monthsOwed}</p>
+                      </div>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-xs text-red-600 font-medium uppercase mb-1">Deuda Total</p>
+                        <p className="text-2xl font-bold text-red-700">
+                          S/. {(typeof summary.balance === 'number' && !isNaN(summary.balance)) ? summary.balance.toFixed(2) : '0.00'}
+                        </p>
+                      </div>
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-xs text-yellow-600 font-medium uppercase mb-1">Deuda Más Antigua</p>
+                        <p className="text-lg font-bold text-yellow-700">{summary.oldestDebt || '-'}</p>
+                      </div>
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-xs text-green-600 font-medium uppercase mb-1">Último Pago</p>
+                        <p className="text-sm font-bold text-green-700">
+                          {summary.lastPayment ? new Date(summary.lastPayment).toLocaleDateString('es-PE') : 'Sin pagos'}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Matriz mensual del cliente */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Historial de Pagos - {selectedYear}</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gray-300">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Mes</th>
+                        {monthsOfYear.map(m => (
+                          <th key={m.month} className="px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase">
+                            {m.shortName}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">Estado</td>
+                        {monthsOfYear.map(m => {
+                          const clientDebts = getClientDebts(selectedClient.id);
+                          const monthDebt = clientDebts.find(d => d.month === m.month && d.year === selectedYear);
+
+                          return (
+                            <td key={m.month} className="px-2 py-2">
+                              <div
+                                className={`h-16 flex items-center justify-center text-xs font-semibold rounded cursor-pointer transition-all ${
+                                  monthDebt?.status === 'paid'
+                                    ? 'bg-green-500 text-white hover:bg-green-600'
+                                    : monthDebt?.status === 'overdue'
+                                    ? 'bg-red-500 text-white hover:bg-red-600'
+                                    : monthDebt?.status === 'partial'
+                                    ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                                    : monthDebt?.status === 'pending'
+                                    ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                    : 'bg-gray-100 text-gray-500'
+                                }`}
+                                onClick={() => monthDebt && handleCellClick(selectedClient, monthDebt, m.month)}
+                                title={
+                                  monthDebt?.status === 'paid'
+                                    ? `✅ Pagado: S/. ${monthDebt.amountPaid || monthDebt.amountDue}`
+                                    : monthDebt?.status === 'overdue'
+                                    ? `❌ Vencido: S/. ${monthDebt.amountDue}`
+                                    : monthDebt?.status === 'partial'
+                                    ? `⚠️ Parcial: S/. ${monthDebt.amountPaid}/${monthDebt.amountDue}`
+                                    : monthDebt?.status === 'pending'
+                                    ? `⏳ Pendiente: S/. ${monthDebt.amountDue}`
+                                    : 'Sin deuda'
+                                }
+                              >
+                                {monthDebt?.status === 'paid' ? '✓' :
+                                 monthDebt?.status === 'overdue' ? '✗' :
+                                 monthDebt?.status === 'partial' ? '½' :
+                                 monthDebt?.status === 'pending' ? '⏳' : '-'}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      <tr className="border-t">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">Monto</td>
+                        {monthsOfYear.map(m => {
+                          const clientDebts = getClientDebts(selectedClient.id);
+                          const monthDebt = clientDebts.find(d => d.month === m.month && d.year === selectedYear);
+
+                          return (
+                            <td key={m.month} className="px-2 py-2 text-center text-xs">
+                              {monthDebt ? (
+                                <span className={`font-semibold ${
+                                  monthDebt.status === 'paid' ? 'text-green-700' : 'text-red-700'
+                                }`}>
+                                  S/. {monthDebt.amountDue || monthDebt.amountPaid || 0}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Leyenda */}
+                <div className="mt-4 flex flex-wrap gap-4 text-xs">
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                    <span>Pagado</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                    <span>Vencido</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+                    <span>Pago Parcial</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-orange-500 rounded mr-2"></div>
+                    <span>Pendiente</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-gray-100 border border-gray-300 rounded mr-2"></div>
+                    <span>Sin deuda</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer con botón de cerrar */}
+            <div className="border-t border-gray-200 p-4 flex justify-end">
+              <button
+                onClick={() => setShowMonthlyDetailsModal(false)}
+                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
