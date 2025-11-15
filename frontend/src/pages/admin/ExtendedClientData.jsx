@@ -26,17 +26,46 @@ const ExtendedClientData = () => {
     fetchExtendedData
   } = useClientExtendedStore();
   const { success, error: showError } = useNotificationStore();
-  
+
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTarifa, setFilterTarifa] = useState('');
   const [editingClient, setEditingClient] = useState(null);
   const [formData, setFormData] = useState({});
-  
+
   useEffect(() => {
     fetchClients();
     fetchExtendedData();
   }, []);
+
+  // Función helper para dividir fullName en apellidos y nombres
+  const splitFullName = (fullName) => {
+    if (!fullName) return { nombres: '-', apellidos: '-' };
+
+    const parts = fullName.trim().split(' ').filter(Boolean);
+
+    if (parts.length === 0) {
+      return { nombres: '-', apellidos: '-' };
+    } else if (parts.length === 1) {
+      return { nombres: parts[0], apellidos: '-' };
+    } else if (parts.length === 2) {
+      return { nombres: parts[0], apellidos: parts[1] };
+    } else if (parts.length === 3) {
+      return { nombres: parts[0], apellidos: parts.slice(1).join(' ') };
+    } else {
+      return { nombres: parts.slice(0, 2).join(' '), apellidos: parts.slice(2).join(' ') };
+    }
+  };
+
+  // Función para obtener costo por defecto según plan
+  const getDefaultCost = (plan) => {
+    const costs = {
+      basic: 50,
+      standard: 80,
+      premium: 120
+    };
+    return costs[plan] || 80;
+  };
   
   // Filtrar clientes
   const filteredClients = clients.filter(client => {
@@ -56,11 +85,17 @@ const ExtendedClientData = () => {
   // Manejar edición
   const handleEdit = (client) => {
     const extendedData = getExtendedData(client.id) || {};
+
+    // Si no hay datos extendidos, pre-rellenar con fallbacks
+    const { nombres, apellidos } = extendedData.apellidos || extendedData.nombres
+      ? { nombres: extendedData.nombres, apellidos: extendedData.apellidos }
+      : splitFullName(client.fullName);
+
     setEditingClient(client.id);
     setFormData({
-      apellidos: extendedData.apellidos || '',
-      nombres: extendedData.nombres || '',
-      costoMensual: extendedData.costoMensual || 0,
+      apellidos: extendedData.apellidos || apellidos || '',
+      nombres: extendedData.nombres || nombres || '',
+      costoMensual: extendedData.costoMensual || getDefaultCost(client.servicePlan),
       costoInstalacion: extendedData.costoInstalacion || 0,
       referencia: extendedData.referencia || '',
       observaciones: extendedData.observaciones || '',
@@ -214,7 +249,18 @@ const ExtendedClientData = () => {
               {filteredClients.map((client) => {
                 const extendedData = getExtendedData(client.id);
                 const isEditing = editingClient === client.id;
-                
+
+                // Obtener apellidos y nombres con fallback
+                const { nombres: displayNombres, apellidos: displayApellidos } = extendedData?.apellidos || extendedData?.nombres
+                  ? { nombres: extendedData.nombres, apellidos: extendedData.apellidos }
+                  : splitFullName(client.fullName);
+
+                // Obtener costo mensual con fallback
+                const displayCostoMensual = extendedData?.costoMensual || getDefaultCost(client.servicePlan);
+
+                // Obtener costo instalación con fallback
+                const displayCostoInstalacion = extendedData?.costoInstalacion || 0;
+
                 return (
                   <tr key={client.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -227,7 +273,7 @@ const ExtendedClientData = () => {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       {isEditing ? (
                         <input
@@ -238,12 +284,12 @@ const ExtendedClientData = () => {
                           placeholder="Apellidos"
                         />
                       ) : (
-                        <span className="text-sm text-gray-900">
-                          {extendedData?.apellidos || '-'}
+                        <span className="text-sm text-gray-900" title={displayApellidos !== '-' ? `Desde: ${extendedData ? 'Datos extendidos' : 'Nombre completo'}` : ''}>
+                          {displayApellidos}
                         </span>
                       )}
                     </td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       {isEditing ? (
                         <input
@@ -254,12 +300,12 @@ const ExtendedClientData = () => {
                           placeholder="Nombres"
                         />
                       ) : (
-                        <span className="text-sm text-gray-900">
-                          {extendedData?.nombres || '-'}
+                        <span className="text-sm text-gray-900" title={displayNombres !== '-' ? `Desde: ${extendedData ? 'Datos extendidos' : 'Nombre completo'}` : ''}>
+                          {displayNombres}
                         </span>
                       )}
                     </td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       {isEditing ? (
                         <input
@@ -270,12 +316,12 @@ const ExtendedClientData = () => {
                           placeholder="0"
                         />
                       ) : (
-                        <span className="text-sm text-gray-900">
-                          S/. {extendedData?.costoMensual || '0'}
+                        <span className="text-sm text-gray-900" title={!extendedData?.costoMensual ? `Desde plan ${client.servicePlan}` : 'Costo personalizado'}>
+                          S/. {displayCostoMensual.toFixed(2)}
                         </span>
                       )}
                     </td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       {isEditing ? (
                         <input
@@ -287,7 +333,7 @@ const ExtendedClientData = () => {
                         />
                       ) : (
                         <span className="text-sm text-gray-900">
-                          S/. {extendedData?.costoInstalacion || '0'}
+                          S/. {displayCostoInstalacion.toFixed(2)}
                         </span>
                       )}
                     </td>
