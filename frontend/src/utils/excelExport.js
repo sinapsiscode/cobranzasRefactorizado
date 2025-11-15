@@ -175,14 +175,17 @@ export const exportPaymentsToExcel = (payments) => {
 
   const paymentsData = payments.map(payment => ({
     'ID': payment.id,
-    'Cliente ID': payment.clientId,
+    'Cliente': payment.clientName || payment.clientId,
+    'DNI': payment.clientDNI || '',
+    'Teléfono': payment.clientPhone || '',
     'Monto': payment.amount,
     'Estado': getPaymentStatusLabel(payment.status),
     'Período': payment.period,
     'Fecha Vencimiento': new Date(payment.dueDate).toLocaleDateString('es-PE'),
     'Fecha Pago': payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString('es-PE') : '',
     'Método Pago': payment.paymentMethod || '',
-    'Cobrador': payment.collectorId || '',
+    'Cobrador ID': payment.collectorId || '',
+    'Descripción': payment.description || '',
     'Creado': new Date(payment.createdAt).toLocaleDateString('es-PE')
   }));
 

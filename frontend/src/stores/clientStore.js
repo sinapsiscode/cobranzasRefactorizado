@@ -36,9 +36,9 @@ export const useClientStore = create((set, get) => ({
       const { filters, pagination } = get();
       const params = {
         ...filters,
-        ...customFilters,
-        page: pagination.page,
-        limit: pagination.limit
+        page: customFilters.page || pagination.page,
+        limit: customFilters.limit || pagination.limit,
+        ...customFilters
       };
 
       // Construir query string

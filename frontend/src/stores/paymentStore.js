@@ -47,9 +47,9 @@ export const usePaymentStore = create((set, get) => ({
       const { filters, pagination } = get();
       const params = {
         ...filters,
-        ...customFilters,
-        page: pagination.page,
-        limit: pagination.limit
+        page: customFilters.page || pagination.page,
+        limit: customFilters.limit || pagination.limit,
+        ...customFilters
       };
 
       // Construir query string
@@ -115,8 +115,7 @@ export const usePaymentStore = create((set, get) => ({
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      const newPayment = data.data;
+      const newPayment = await response.json();
 
       // Actualizar lista local
       set(state => ({
@@ -159,8 +158,7 @@ export const usePaymentStore = create((set, get) => ({
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      const updatedPayment = data.data;
+      const updatedPayment = await response.json();
 
       // Actualizar lista local y filtrar nulls/undefined
       set(state => ({
@@ -218,8 +216,7 @@ export const usePaymentStore = create((set, get) => ({
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      const updatedPayment = data.data;
+      const updatedPayment = await response.json();
 
       // Actualizar lista local y filtrar nulls/undefined
       set(state => ({

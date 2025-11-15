@@ -1131,6 +1131,67 @@ server.patch('/api/user-preferences/:userId', (req, res) => {
 });
 
 // ============================================
+// ENDPOINTS DE USERS (USUARIOS)
+// ============================================
+
+// Actualizar usuario
+server.patch('/api/users/:id', (req, res) => {
+  const { id } = req.params;
+  const db = router.db;
+
+  const user = db.get('users').find({ id }).value();
+
+  if (!user) {
+    return res.status(404).json({ error: 'Usuario no encontrado' });
+  }
+
+  // No permitir cambiar el rol o username del usuario logueado si es admin
+  const updates = { ...req.body };
+
+  // Asegurar que updatedAt se actualice
+  updates.updatedAt = new Date().toISOString();
+
+  const updatedUser = db.get('users')
+    .find({ id })
+    .assign(updates)
+    .write();
+
+  // No devolver la contraseña en la respuesta
+  const { password, ...userWithoutPassword } = updatedUser;
+
+  res.json(userWithoutPassword);
+});
+
+// Eliminar usuario
+server.delete('/api/users/:id', (req, res) => {
+  const { id } = req.params;
+  const db = router.db;
+
+  const user = db.get('users').find({ id }).value();
+
+  if (!user) {
+    return res.status(404).json({ error: 'Usuario no encontrado' });
+  }
+
+  // Prevenir eliminación del último admin
+  if (user.role === 'admin') {
+    const adminCount = db.get('users').filter({ role: 'admin' }).value().length;
+    if (adminCount <= 1) {
+      return res.status(400).json({
+        error: 'No se puede eliminar el último administrador del sistema'
+      });
+    }
+  }
+
+  db.get('users').remove({ id }).write();
+
+  res.json({
+    message: 'Usuario eliminado exitosamente',
+    id
+  });
+});
+
+// ============================================
 // ENDPOINTS DE VOUCHERS
 // ============================================
 

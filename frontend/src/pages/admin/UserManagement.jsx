@@ -236,7 +236,7 @@ const UserManagement = () => {
       }
       updates.updatedAt = new Date().toISOString();
 
-      const response = await fetch(`/api/users/${selectedUser.id}`, {
+      const response = await fetch(`${API_URL}/users/${selectedUser.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -258,7 +258,7 @@ const UserManagement = () => {
 
   const handleToggleStatus = async (user) => {
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await fetch(`${API_URL}/users/${user.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -280,7 +280,7 @@ const UserManagement = () => {
   const handleDeleteUser = async (user) => {
     if (window.confirm(`¿Está seguro de eliminar al usuario ${user.fullName}?`)) {
       try {
-        const response = await fetch(`/api/users/${user.id}`, {
+        const response = await fetch(`${API_URL}/users/${user.id}`, {
           method: 'DELETE'
         });
 

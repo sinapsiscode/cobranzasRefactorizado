@@ -3,6 +3,7 @@ import { usePaymentStore } from '../../stores/paymentStore';
 import { useClientStore } from '../../stores/clientStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { useVoucherStore } from '../../stores/voucherStore';
+import { useAuthStore } from '../../stores/authStore';
 import { 
   CreditCard, 
   Plus, 
@@ -42,6 +43,7 @@ import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import PaymentRegistrationModal from '../../components/common/PaymentRegistrationModal';
 import { generatePaymentReceipt } from '../../services/reports/pdfGenerator';
+import { exportPaymentsToExcel } from '../../utils/excelExport';
 // MIGRADO A JSON SERVER - import eliminado
 
 const API_URL = 'http://localhost:8231/api';
@@ -62,6 +64,7 @@ const PaymentManagement = () => {
   const { success, error: showError, info } = useNotificationStore();
   const { vouchers, fetchAllVouchers, reviewVoucher, isLoading: vouchersLoading } = useVoucherStore();
   const { validatePayment, finalizePayment } = usePaymentStore();
+  const { user: currentUser } = useAuthStore();
   
   // Estados principales
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'history' | 'vouchers'
@@ -81,11 +84,26 @@ const PaymentManagement = () => {
 
   // Estado para modal de registro de pagos
   const [showPaymentRegistrationModal, setShowPaymentRegistrationModal] = useState(false);
-  
+
+  // Estado para modal de detalles de pago
+  const [selectedPaymentForDetails, setSelectedPaymentForDetails] = useState(null);
+  const [showPaymentDetailsModal, setShowPaymentDetailsModal] = useState(false);
+
   useEffect(() => {
-    fetchPayments();
-    fetchClients();
-    fetchAllVouchers();
+    // Cargar TODOS los pagos y clientes sin límite de paginación
+    const loadData = async () => {
+      const [paymentsData, clientsData] = await Promise.all([
+        fetchPayments({ limit: 999999 }),
+        fetchClients({ limit: 999999 }),
+        fetchAllVouchers()
+      ]);
+      console.log('=== DATOS CARGADOS EN PAYMENT MANAGEMENT ===');
+      console.log('Total pagos cargados:', paymentsData?.length || 0);
+      console.log('Total clientes cargados:', clientsData?.length || 0);
+      console.log('Clientes en store:', clients.length);
+      console.log('Pagos en store:', payments.length);
+    };
+    loadData();
   }, []);
 
   // Agrupar pagos por mes
@@ -139,15 +157,72 @@ const PaymentManagement = () => {
 
   // Filtrar pagos según el tab activo
   const getFilteredPayments = () => {
+    let filtered = [];
+
+    // Paso 1: Filtrar por tab y mes seleccionado
     if (selectedMonth) {
-      return monthGroups[selectedMonth]?.payments || [];
+      filtered = monthGroups[selectedMonth]?.payments || [];
+    } else if (activeTab === 'pending') {
+      filtered = payments.filter(p => p.status === 'pending' || p.status === 'overdue');
+    } else if (activeTab === 'history') {
+      // Historial: solo pagos completados/pagados
+      filtered = payments.filter(p =>
+        p.status === 'paid' ||
+        p.status === 'collected' ||
+        p.status === 'validated' ||
+        p.status === 'partial'
+      );
+    } else {
+      filtered = payments;
     }
-    
-    if (activeTab === 'pending') {
-      return payments.filter(p => p.status === 'pending' || p.status === 'overdue');
+
+    // Paso 2: Aplicar filtro de estado si está seleccionado
+    if (selectedStatus) {
+      filtered = filtered.filter(p => p.status === selectedStatus);
     }
-    
-    return payments;
+
+    // Paso 3: Aplicar filtro de búsqueda si hay texto
+    if (searchTerm && searchTerm.trim().length > 0) {
+      const search = searchTerm.toLowerCase().trim();
+      console.log('=== BUSCANDO ===');
+      console.log('Término de búsqueda:', search);
+      console.log('Total clientes disponibles:', clients.length);
+      console.log('Pagos antes de filtrar:', filtered.length);
+
+      filtered = filtered.filter(payment => {
+        const client = clients.find(c => c.id === payment.clientId);
+        if (!client) {
+          console.warn('Cliente no encontrado para payment:', payment.id, 'clientId:', payment.clientId);
+        }
+        const clientName = client?.fullName?.toLowerCase() || '';
+        const clientDNI = client?.dni?.toLowerCase() || '';
+        const clientPhone = client?.phone?.toLowerCase() || '';
+        const month = payment.month || '';
+        const amount = payment.amount?.toString() || '';
+        const paymentMethod = payment.paymentMethod?.toLowerCase() || '';
+        const comments = payment.comments?.toLowerCase() || '';
+
+        const matches = (
+          clientName.includes(search) ||
+          clientDNI.includes(search) ||
+          clientPhone.includes(search) ||
+          month.includes(search) ||
+          amount.includes(search) ||
+          paymentMethod.includes(search) ||
+          comments.includes(search)
+        );
+
+        if (matches && client) {
+          console.log('Match encontrado:', client.fullName, '- Pago:', payment.id);
+        }
+
+        return matches;
+      });
+
+      console.log('Pagos después de filtrar:', filtered.length);
+    }
+
+    return filtered;
   };
 
   const filteredPayments = getFilteredPayments();
@@ -163,6 +238,35 @@ const PaymentManagement = () => {
   const getClientName = (clientId) => {
     const client = clients.find(c => c.id === clientId);
     return client ? client.fullName : 'Cliente desconocido';
+  };
+
+  // Función para exportar pagos a Excel
+  const handleExportPayments = () => {
+    try {
+      const paymentsToExport = filteredPayments;
+
+      if (paymentsToExport.length === 0) {
+        info('No hay pagos para exportar');
+        return;
+      }
+
+      // Enriquecer los pagos con información del cliente
+      const enrichedPayments = paymentsToExport.map(payment => {
+        const client = clients.find(c => c.id === payment.clientId);
+        return {
+          ...payment,
+          clientName: client?.fullName || 'Cliente desconocido',
+          clientDNI: client?.dni || '',
+          clientPhone: client?.phone || ''
+        };
+      });
+
+      exportPaymentsToExcel(enrichedPayments);
+      success(`${paymentsToExport.length} pagos exportados exitosamente`);
+    } catch (error) {
+      console.error('Error al exportar pagos:', error);
+      showError('Error al exportar pagos a Excel');
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -240,6 +344,12 @@ const PaymentManagement = () => {
   // ELIMINADO: No se permite marcar pagos como pagados sin validación
   // Todos los pagos DEBEN pasar por el flujo de validación obligatoria
 
+  // Ver detalles del pago
+  const handleViewPaymentDetails = (payment) => {
+    setSelectedPaymentForDetails(payment);
+    setShowPaymentDetailsModal(true);
+  };
+
   const handlePrintReceipt = async (payment) => {
     try {
       // Obtener datos del cliente
@@ -256,21 +366,52 @@ const PaymentManagement = () => {
         collector = users.find(u => u.id === payment.collectorId);
       }
 
-      // Obtener datos del validador (OBLIGATORIO para todos los pagos)
+      // Obtener datos del validador
       let validator = null;
       if (payment.validatedBy) {
         validator = users.find(u => u.id === payment.validatedBy);
       }
 
-      // Solo generar recibo si el pago fue validado
+      // Si el pago no está validado y el usuario actual es admin/superadmin, auto-validar
+      if (!validator && currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin')) {
+        // Auto-validar el pago con el usuario actual
+        try {
+          const updateResponse = await fetch(`${API_URL}/payments/${payment.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              validatedBy: currentUser.id,
+              validatedAt: new Date().toISOString(),
+              status: 'validated'
+            })
+          });
+
+          if (updateResponse.ok) {
+            const updatedPayment = await updateResponse.json();
+            validator = currentUser;
+            payment.validatedBy = currentUser.id;
+            payment.validatedAt = new Date().toISOString();
+            payment.status = 'validated';
+            info('Pago validado automáticamente');
+            // Refrescar la lista de pagos
+            await fetchPayments({ limit: 999999 });
+          }
+        } catch (validationError) {
+          console.error('Error al auto-validar:', validationError);
+        }
+      }
+
+      // Si aún no hay validador, mostrar error
       if (!validator) {
-        showError('No se puede generar recibo: el pago debe ser validado por un Administrador o Súper administrador');
+        showError('No se puede generar recibo: el pago debe ser validado por un Administrador');
         return;
       }
 
       // Generar el recibo con firma del validador
       await generatePaymentReceipt(payment, client, collector, validator);
-      success('Recibo generado exitosamente con firma del validador');
+      success('Recibo generado exitosamente');
     } catch (error) {
       showError('Error al generar el recibo');
       console.error('Error:', error);
@@ -711,6 +852,7 @@ const PaymentManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <button
+                        onClick={() => handleViewPaymentDetails(payment)}
                         className="text-blue-600 hover:text-blue-900"
                         title="Ver detalles"
                       >
@@ -784,7 +926,10 @@ const PaymentManagement = () => {
                   <span className="font-medium">Mes Completo</span>
                 </div>
               )}
-              <button className="flex items-center px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-blue-600">
+              <button
+                onClick={handleExportPayments}
+                className="flex items-center px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-blue-600"
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Exportar
               </button>
@@ -893,6 +1038,7 @@ const PaymentManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <button
+                          onClick={() => handleViewPaymentDetails(payment)}
                           className="text-blue-600 hover:text-blue-900"
                           title="Ver detalles"
                         >
@@ -939,7 +1085,10 @@ const PaymentManagement = () => {
         </div>
         
         <div className="flex space-x-3">
-          <button className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button
+            onClick={handleExportPayments}
+            className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </button>
@@ -1015,7 +1164,12 @@ const PaymentManagement = () => {
               <div className="flex justify-between items-center px-6">
                 <nav className="-mb-px flex space-x-8">
                   <button
-                    onClick={() => setActiveTab('pending')}
+                    onClick={() => {
+                      setActiveTab('pending');
+                      setSelectedMonth(null);
+                      setSelectedStatus('');
+                      setSearchTerm('');
+                    }}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'pending'
                         ? 'border-primary text-primary'
@@ -1034,7 +1188,12 @@ const PaymentManagement = () => {
                   </button>
                   
                   <button
-                    onClick={() => setActiveTab('history')}
+                    onClick={() => {
+                      setActiveTab('history');
+                      setSelectedMonth(null);
+                      setSelectedStatus('');
+                      setSearchTerm('');
+                    }}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'history'
                         ? 'border-primary text-primary'
@@ -1048,7 +1207,12 @@ const PaymentManagement = () => {
                   </button>
                   
                   <button
-                    onClick={() => setActiveTab('vouchers')}
+                    onClick={() => {
+                      setActiveTab('vouchers');
+                      setSelectedMonth(null);
+                      setSelectedStatus('');
+                      setSearchTerm('');
+                    }}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'vouchers'
                         ? 'border-primary text-primary'
@@ -1094,7 +1258,7 @@ const PaymentManagement = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Buscar por cliente, mes o monto..."
+                    placeholder="Buscar por nombre, DNI, teléfono, mes, monto..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
@@ -1444,12 +1608,160 @@ const PaymentManagement = () => {
         </div>
       )}
 
+      {/* Modal de detalles de pago */}
+      {showPaymentDetailsModal && selectedPaymentForDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Detalles del Pago</h3>
+                <button
+                  onClick={() => setShowPaymentDetailsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Información del cliente */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Información del Cliente</h4>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Cliente:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {getClientName(selectedPaymentForDetails.clientId)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">ID Pago:</span>
+                    <span className="text-sm font-mono text-gray-900">{selectedPaymentForDetails.id}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Información del pago */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Información del Pago</h4>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Monto:</span>
+                    <span className="text-sm font-bold text-primary">
+                      {formatAmount(selectedPaymentForDetails.amount)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Estado:</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedPaymentForDetails.status)}`}>
+                      {getStatusLabel(selectedPaymentForDetails.status)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Período:</span>
+                    <span className="text-sm text-gray-900">
+                      {formatMonthName(selectedPaymentForDetails.month)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Fecha de vencimiento:</span>
+                    <span className="text-sm text-gray-900">
+                      {formatDate(selectedPaymentForDetails.dueDate)}
+                    </span>
+                  </div>
+                  {selectedPaymentForDetails.paymentDate && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Fecha de pago:</span>
+                      <span className="text-sm text-gray-900">
+                        {formatDate(selectedPaymentForDetails.paymentDate)}
+                      </span>
+                    </div>
+                  )}
+                  {selectedPaymentForDetails.paymentMethod && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Método de pago:</span>
+                      <span className="text-sm text-gray-900">
+                        {selectedPaymentForDetails.paymentMethod === 'cash' ? 'Efectivo' :
+                         selectedPaymentForDetails.paymentMethod === 'transfer' ? 'Transferencia' :
+                         selectedPaymentForDetails.paymentMethod === 'deposit' ? 'Depósito' :
+                         selectedPaymentForDetails.paymentMethod}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Información de validación */}
+              {(selectedPaymentForDetails.validatedBy || selectedPaymentForDetails.collectorId) && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Información Adicional</h4>
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                    {selectedPaymentForDetails.collectorId && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Cobrador ID:</span>
+                        <span className="text-sm text-gray-900">{selectedPaymentForDetails.collectorId}</span>
+                      </div>
+                    )}
+                    {selectedPaymentForDetails.validatedBy && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Validado por ID:</span>
+                        <span className="text-sm text-gray-900">{selectedPaymentForDetails.validatedBy}</span>
+                      </div>
+                    )}
+                    {selectedPaymentForDetails.validatedAt && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Fecha de validación:</span>
+                        <span className="text-sm text-gray-900">
+                          {new Date(selectedPaymentForDetails.validatedAt).toLocaleString('es-PE')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Comentarios */}
+              {selectedPaymentForDetails.comments && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Comentarios</h4>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-900">{selectedPaymentForDetails.comments}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Acciones */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowPaymentDetailsModal(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cerrar
+                </button>
+                {selectedPaymentForDetails.status === 'paid' && (
+                  <button
+                    onClick={() => {
+                      setShowPaymentDetailsModal(false);
+                      handlePrintReceipt(selectedPaymentForDetails);
+                    }}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Imprimir Recibo
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Registro de Pagos */}
       <PaymentRegistrationModal
         isOpen={showPaymentRegistrationModal}
         onClose={() => {
           setShowPaymentRegistrationModal(false);
-          fetchPayments(); // Recargar pagos después de cerrar el modal
+          fetchPayments({ limit: 999999 }); // Recargar pagos después de cerrar el modal
         }}
       />
     </div>
