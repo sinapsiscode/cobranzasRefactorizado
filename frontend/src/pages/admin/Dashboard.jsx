@@ -329,15 +329,6 @@ const AdminDashboard = () => {
   // Obtener métricas filtradas
   const displayMetrics = getFilteredMetrics();
 
-  // DEBUG: Log para verificar métricas
-  console.log('=== DEBUG DASHBOARD METRICS ===');
-  console.log('metrics from store:', metrics);
-  console.log('displayMetrics:', displayMetrics);
-  console.log('currentClients:', displayMetrics.currentClients);
-  console.log('activeClients:', displayMetrics.activeClients);
-  console.log('clientesActivos:', displayMetrics.clientesActivos);
-  console.log('Total clients in store:', clients.length);
-
   // Los datos del gráfico ya vienen filtrados desde el store con el parámetro monthsToLoad
   // No necesitamos filtrarlos aquí porque ya se solicitan solo 3 meses para subadmin
   const displayChartData = chartData;

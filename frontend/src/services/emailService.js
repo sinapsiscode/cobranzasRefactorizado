@@ -39,11 +39,7 @@ const simulateEmailSend = async (to, subject, body) => {
 export const sendEmail = async (to, subject, body) => {
   const { emailConfig } = useSettingsStore.getState();
 
-  // Validar configuración
-  if (!emailConfig.enabled) {
-    throw new Error('El servicio de email no está habilitado. Configúrelo en Ajustes.');
-  }
-
+  // Validar solo datos básicos (en modo simulado no requiere configuración SMTP)
   if (!to || !to.includes('@')) {
     throw new Error('Email del destinatario inválido');
   }
@@ -53,8 +49,8 @@ export const sendEmail = async (to, subject, body) => {
   }
 
   try {
+    // En modo simulado, siempre enviar
     // En producción, aquí iría la lógica real de envío usando SMTP
-    // Por ahora, simulamos el envío
     const result = await simulateEmailSend(to, subject, body);
 
     return {

@@ -120,6 +120,90 @@ server.use((req, res, next) => {
 // RUTAS PERSONALIZADAS
 // ============================================
 
+// Endpoint personalizado para obtener clientes con filtros y paginación
+server.get('/api/clients', (req, res) => {
+  const db = router.db;
+  const {
+    search = '',
+    status = '',
+    plan = '',
+    clientStatus = '',
+    neighborhoods = '',
+    sortBy = 'fullName',
+    sortOrder = 'asc',
+    page = 1,
+    limit = 25
+  } = req.query;
+
+  let clients = db.get('clients').value();
+
+  // Filtro de búsqueda (nombre, DNI, teléfono, email)
+  if (search && search.length >= 3) {
+    const searchLower = search.toLowerCase();
+    clients = clients.filter(client =>
+      client.fullName?.toLowerCase().includes(searchLower) ||
+      client.dni?.toLowerCase().includes(searchLower) ||
+      client.phone?.toLowerCase().includes(searchLower) ||
+      client.email?.toLowerCase().includes(searchLower)
+    );
+  }
+
+  // Filtro por plan de servicio
+  if (plan) {
+    clients = clients.filter(client => client.servicePlan === plan);
+  }
+
+  // Filtro por estado de cliente
+  if (clientStatus) {
+    clients = clients.filter(client => (client.status || 'active') === clientStatus);
+  }
+
+  // Filtro por barrios (puede ser múltiple)
+  if (neighborhoods) {
+    const neighborhoodArray = Array.isArray(neighborhoods) ? neighborhoods : [neighborhoods];
+    if (neighborhoodArray.length > 0 && neighborhoodArray[0] !== '') {
+      clients = clients.filter(client => neighborhoodArray.includes(client.neighborhood));
+    }
+  }
+
+  // Ordenamiento
+  clients.sort((a, b) => {
+    let aVal = a[sortBy] || '';
+    let bVal = b[sortBy] || '';
+
+    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+    if (sortOrder === 'asc') {
+      return aVal > bVal ? 1 : -1;
+    } else {
+      return aVal < bVal ? 1 : -1;
+    }
+  });
+
+  // Paginación
+  const total = clients.length;
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const pages = Math.ceil(total / limitNum);
+  const startIndex = (pageNum - 1) * limitNum;
+  const endIndex = startIndex + limitNum;
+
+  const paginatedClients = clients.slice(startIndex, endIndex);
+
+  res.json({
+    items: paginatedClients,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total: total,
+      pages: pages,
+      hasNext: pageNum < pages,
+      hasPrev: pageNum > 1
+    }
+  });
+});
+
 // Obtener clientes con deudas
 server.get('/api/clients/with-debts', (req, res) => {
   const db = router.db;
@@ -731,15 +815,20 @@ server.patch('/api/settings', (req, res) => {
 server.get('/api/neighborhoods', (req, res) => {
   const db = router.db;
   const clients = db.get('clients').value();
+  const settings = db.get('settings').value();
 
-  // Obtener barrios únicos y filtrar vacíos
-  const neighborhoods = [...new Set(
-    clients
-      .map(c => c.neighborhood)
-      .filter(Boolean)
-  )].sort();
+  // Obtener barrios de clientes
+  const clientNeighborhoods = clients
+    .map(c => c.neighborhood)
+    .filter(Boolean);
 
-  res.json(neighborhoods);
+  // Obtener barrios configurados
+  const configuredNeighborhoods = settings.neighborhoods || [];
+
+  // Combinar ambos y obtener únicos
+  const allNeighborhoods = [...new Set([...configuredNeighborhoods, ...clientNeighborhoods])].sort();
+
+  res.json(allNeighborhoods);
 });
 
 // Crear nuevo barrio (agrega un cliente temporal con ese barrio)
@@ -753,19 +842,33 @@ server.post('/api/neighborhoods', (req, res) => {
 
   const trimmedName = name.trim();
 
-  // Verificar si ya existe
-  const clients = db.get('clients').value();
-  const exists = clients.some(c => c.neighborhood === trimmedName);
+  // Obtener configuración actual
+  const settings = db.get('settings').value();
+  const currentNeighborhoods = settings.neighborhoods || [];
 
-  if (exists) {
+  // Verificar si ya existe en la configuración
+  if (currentNeighborhoods.includes(trimmedName)) {
     return res.status(400).json({ error: 'El barrio ya existe' });
   }
 
-  // El barrio se creará automáticamente cuando se asigne a un cliente
-  res.status(201).json({ name: trimmedName, message: 'Barrio registrado. Se guardará cuando lo asigne a un cliente.' });
+  // Agregar el barrio a la lista de neighborhoods en settings
+  const updatedNeighborhoods = [...currentNeighborhoods, trimmedName];
+
+  db.get('settings')
+    .assign({
+      neighborhoods: updatedNeighborhoods,
+      updatedAt: new Date().toISOString()
+    })
+    .write();
+
+  res.status(201).json({
+    name: trimmedName,
+    message: 'Barrio agregado correctamente',
+    neighborhoods: updatedNeighborhoods
+  });
 });
 
-// Actualizar barrio (renombrar en todos los clientes)
+// Actualizar barrio (renombrar en todos los clientes y en settings)
 server.patch('/api/neighborhoods/:oldName', (req, res) => {
   const { oldName } = req.params;
   const { newName } = req.body;
@@ -778,20 +881,20 @@ server.patch('/api/neighborhoods/:oldName', (req, res) => {
   const trimmedNewName = newName.trim();
   const decodedOldName = decodeURIComponent(oldName);
 
+  // Obtener configuración actual
+  const settings = db.get('settings').value();
+  const currentNeighborhoods = settings.neighborhoods || [];
+
   // Verificar si el nuevo nombre ya existe
   const clients = db.get('clients').value();
   const newNameExists = clients.some(c => c.neighborhood === trimmedNewName && c.neighborhood !== decodedOldName);
 
-  if (newNameExists) {
+  if (newNameExists || (currentNeighborhoods.includes(trimmedNewName) && trimmedNewName !== decodedOldName)) {
     return res.status(400).json({ error: 'El nuevo nombre ya existe' });
   }
 
   // Actualizar todos los clientes con este barrio
   const clientsToUpdate = clients.filter(c => c.neighborhood === decodedOldName);
-
-  if (clientsToUpdate.length === 0) {
-    return res.status(404).json({ error: 'Barrio no encontrado' });
-  }
 
   clientsToUpdate.forEach(client => {
     db.get('clients')
@@ -803,8 +906,22 @@ server.patch('/api/neighborhoods/:oldName', (req, res) => {
       .write();
   });
 
+  // Actualizar el barrio en settings si existe
+  const neighborhoodIndex = currentNeighborhoods.indexOf(decodedOldName);
+  if (neighborhoodIndex !== -1) {
+    const updatedNeighborhoods = [...currentNeighborhoods];
+    updatedNeighborhoods[neighborhoodIndex] = trimmedNewName;
+
+    db.get('settings')
+      .assign({
+        neighborhoods: updatedNeighborhoods,
+        updatedAt: new Date().toISOString()
+      })
+      .write();
+  }
+
   res.json({
-    message: `Barrio actualizado en ${clientsToUpdate.length} cliente(s)`,
+    message: `Barrio actualizado${clientsToUpdate.length > 0 ? ` en ${clientsToUpdate.length} cliente(s)` : ''}`,
     oldName: decodedOldName,
     newName: trimmedNewName,
     affectedClients: clientsToUpdate.length
@@ -828,7 +945,19 @@ server.delete('/api/neighborhoods/:name', (req, res) => {
     });
   }
 
-  res.json({ message: 'Barrio eliminado de la lista' });
+  // Eliminar el barrio de settings
+  const settings = db.get('settings').value();
+  const currentNeighborhoods = settings.neighborhoods || [];
+  const updatedNeighborhoods = currentNeighborhoods.filter(n => n !== decodedName);
+
+  db.get('settings')
+    .assign({
+      neighborhoods: updatedNeighborhoods,
+      updatedAt: new Date().toISOString()
+    })
+    .write();
+
+  res.json({ message: 'Barrio eliminado correctamente' });
 });
 
 // ============================================

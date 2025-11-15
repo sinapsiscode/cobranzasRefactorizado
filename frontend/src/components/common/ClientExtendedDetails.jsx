@@ -22,19 +22,58 @@ const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) =
     }));
   };
 
+  // Función helper para dividir fullName en apellidos y nombres
+  const splitFullName = (fullName) => {
+    if (!fullName) return { nombres: 'No especificado', apellidos: 'No especificado' };
+
+    const parts = fullName.trim().split(' ').filter(Boolean);
+
+    if (parts.length === 0) {
+      return { nombres: 'No especificado', apellidos: 'No especificado' };
+    } else if (parts.length === 1) {
+      return { nombres: parts[0], apellidos: '' };
+    } else if (parts.length === 2) {
+      // Asumimos: Nombre Apellido
+      return { nombres: parts[0], apellidos: parts[1] };
+    } else if (parts.length === 3) {
+      // Asumimos: Nombre Apellido1 Apellido2
+      return { nombres: parts[0], apellidos: parts.slice(1).join(' ') };
+    } else {
+      // 4 o más palabras: primeras dos son nombres, resto apellidos
+      return { nombres: parts.slice(0, 2).join(' '), apellidos: parts.slice(2).join(' ') };
+    }
+  };
+
+  // Obtener apellidos y nombres con fallback
+  const { nombres: clientNombres, apellidos: clientApellidos } = extendedData?.apellidos || extendedData?.nombres
+    ? { nombres: extendedData.nombres, apellidos: extendedData.apellidos }
+    : splitFullName(client.fullName);
+
+  // Calcular costo efectivo del plan
+  const getDefaultCost = (plan) => {
+    const costs = {
+      basic: 50,
+      standard: 80,
+      premium: 120
+    };
+    return costs[plan] || 80;
+  };
+
+  const effectiveCost = extendedData?.costoMensual || getDefaultCost(client.servicePlan);
+
   // Función helper para abrir WhatsApp
   const openWhatsApp = (phone) => {
     if (!phone) return;
-    
+
     // Limpiar el número: quitar espacios, guiones y caracteres especiales
     const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, '');
-    
+
     // Si no empieza con código de país, agregar 51 (Perú)
     const formattedPhone = cleanPhone.startsWith('51') ? cleanPhone : `51${cleanPhone}`;
-    
+
     // Crear URL de WhatsApp
     const whatsappUrl = `https://wa.me/${formattedPhone}`;
-    
+
     // Abrir en nueva ventana
     window.open(whatsappUrl, '_blank');
   };
@@ -100,7 +139,7 @@ const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) =
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-gray-600 mb-2">Costo</p>
-                  <p className="text-base sm:text-lg font-bold text-gray-900">S/. {extendedData?.costoMensual || '0'}</p>
+                  <p className="text-base sm:text-lg font-bold text-gray-900">S/. {effectiveCost}</p>
                 </div>
               </div>
             </div>
@@ -126,11 +165,11 @@ const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) =
                   <div className="grid grid-cols-1 gap-5 mt-6">
                     <div>
                       <label className="text-sm font-bold text-gray-700 uppercase tracking-wider block mb-2">Apellidos</label>
-                      <p className="text-base sm:text-lg text-gray-900 py-3 px-4 bg-white rounded-lg border-2 border-gray-200 font-medium">{extendedData?.apellidos || 'No especificado'}</p>
+                      <p className="text-base sm:text-lg text-gray-900 py-3 px-4 bg-white rounded-lg border-2 border-gray-200 font-medium">{clientApellidos || 'No especificado'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-bold text-gray-700 uppercase tracking-wider block mb-2">Nombres</label>
-                      <p className="text-base sm:text-lg text-gray-900 py-3 px-4 bg-white rounded-lg border-2 border-gray-200 font-medium">{extendedData?.nombres || 'No especificado'}</p>
+                      <p className="text-base sm:text-lg text-gray-900 py-3 px-4 bg-white rounded-lg border-2 border-gray-200 font-medium">{clientNombres || 'No especificado'}</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
@@ -138,7 +177,7 @@ const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) =
                         <p className="text-base sm:text-lg text-gray-900 py-3 px-4 bg-white rounded-lg border-2 border-gray-200 font-medium">{client.dni || 'No especificado'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wider block mb-2">Teléfono</label>
+                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wider block mb-2">Teléfono Principal</label>
                         {client.phone ? (
                           <button
                             onClick={() => openWhatsApp(client.phone)}
@@ -152,6 +191,18 @@ const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) =
                         )}
                       </div>
                     </div>
+                    {client.phone2 && (
+                      <div>
+                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wider block mb-2">Teléfono Secundario</label>
+                        <button
+                          onClick={() => openWhatsApp(client.phone2)}
+                          className="w-full flex items-center justify-center space-x-3 text-white bg-green-500 hover:bg-green-600 active:bg-green-700 transition-colors py-4 px-4 rounded-lg border-2 border-green-600 min-h-[52px] font-semibold"
+                        >
+                          <MessageCircle className="h-5 w-5 flex-shrink-0" />
+                          <span className="text-base truncate">{client.phone2}</span>
+                        </button>
+                      </div>
+                    )}
                     <div>
                       <label className="text-sm font-bold text-gray-700 uppercase tracking-wider block mb-2">Email</label>
                       <p className="text-base sm:text-lg text-gray-900 py-3 px-4 bg-white rounded-lg border-2 border-gray-200 break-all font-medium">{client.email || 'No especificado'}</p>
@@ -236,13 +287,13 @@ const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) =
                     <div className="bg-green-50 rounded-lg p-3 border border-green-200">
                       <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Costo Mensual</label>
                       <p className="text-lg font-semibold text-green-600">
-                        S/. {extendedData?.costoMensual || '0.00'}
+                        S/. {effectiveCost.toFixed(2)}
                       </p>
                     </div>
                     <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                       <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Costo Instalación</label>
                       <p className="text-lg font-semibold text-blue-600">
-                        S/. {extendedData?.costoInstalacion || '0.00'}
+                        S/. {(extendedData?.costoInstalacion || 0).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -380,22 +431,97 @@ const ClientExtendedDetails = ({ client, extendedData, debtSummary, onClose }) =
                   <div className="grid grid-cols-1 gap-4 mt-4">
                     <div>
                       <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Estado Actual</label>
-                      <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border capitalize font-medium">{client.status}</p>
+                      <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border capitalize font-medium">{client.status || 'active'}</p>
                     </div>
+                    {client.statusReason && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Motivo de Estado</label>
+                        <p className="text-sm text-gray-900 py-2 px-3 bg-yellow-50 rounded border border-yellow-200">{client.statusReason}</p>
+                      </div>
+                    )}
+                    {client.status === 'paused' && client.pauseReason && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Motivo de Pausa</label>
+                        <p className="text-sm text-gray-900 py-2 px-3 bg-orange-50 rounded border border-orange-200">{client.pauseReason}</p>
+                      </div>
+                    )}
+                    {client.status === 'paused' && client.pauseStartDate && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Fecha de Pausa</label>
+                        <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border">
+                          {new Date(client.pauseStartDate).toLocaleDateString('es-PE', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    )}
+                    {client.reactivationDate && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Fecha de Reactivación</label>
+                        <p className="text-sm text-gray-900 py-2 px-3 bg-green-50 rounded border border-green-200">
+                          {new Date(client.reactivationDate).toLocaleDateString('es-PE', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    )}
+                    {client.lastLogin && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Último Acceso</label>
+                        <p className="text-sm text-gray-900 py-2 px-3 bg-blue-50 rounded border border-blue-200">
+                          {new Date(client.lastLogin).toLocaleString('es-PE', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Origen de Datos</label>
                       <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border">
                         {extendedData?.importedFrom === 'excel' ? 'Excel BD ABONADOS' : 'Creado Manual'}
                       </p>
                     </div>
+                    {extendedData?.importDate && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Fecha Importación</label>
+                        <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border">
+                          {new Date(extendedData.importDate).toLocaleDateString('es-PE', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    )}
+                    {extendedData?.externalId && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">ID Externo</label>
+                        <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border font-mono">#{extendedData.externalId}</p>
+                      </div>
+                    )}
+                    {client.isArchived && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Estado de Archivo</label>
+                        <p className="text-sm text-red-700 py-2 px-3 bg-red-50 rounded border border-red-200 font-medium">
+                          Archivado {client.archivedDate && `el ${new Date(client.archivedDate).toLocaleDateString('es-PE')}`}
+                        </p>
+                      </div>
+                    )}
                     <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Fecha Importación</label>
-                      <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border">
-                        {extendedData?.importDate ?
-                          new Date(extendedData.importDate).toLocaleDateString('es-PE') :
-                          'No disponible'
-                        }
-                      </p>
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Día Preferido de Pago</label>
+                      <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border">Día {client.preferredPaymentDay || '15'} del mes</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Días para Vencimiento</label>
+                      <p className="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded border">{client.paymentDueDays || '5'} días</p>
                     </div>
                   </div>
                 </div>

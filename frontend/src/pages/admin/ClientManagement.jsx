@@ -652,13 +652,8 @@ const ClientManagement = () => {
   // Enviar recordatorios por email a todos los clientes con deuda
   const handleSendReminders = async () => {
     try {
-      const { isEmailConfigValid } = useSettingsStore.getState();
-
-      // Validar que el servicio de email esté configurado
-      if (!isEmailConfigValid()) {
-        showError('El servicio de email no está configurado. Por favor, configure el email en Ajustes.');
-        return;
-      }
+      // Nota: En modo simulado, el envío de emails se simula sin necesidad de configuración SMTP
+      // En producción, se debe validar la configuración real del servidor de email
 
       const clientsWithDebt = getClientsByStatus('debt');
 
@@ -876,7 +871,7 @@ const ClientManagement = () => {
               <NeighborhoodFilter
                 onFilterChange={handleNeighborhoodFilterChange}
                 selectedNeighborhoods={selectedNeighborhoods}
-                availableNeighborhoods={getAvailableNeighborhoods()}
+                availableNeighborhoods={neighborhoods}
               />
               
               <button className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">

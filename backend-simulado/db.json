@@ -29825,13 +29825,16 @@
     "enableNotifications": true,
     "enableEmailNotifications": false,
     "autoSuspendAfterDays": 30,
-    "updatedAt": "2025-10-09T17:42:41.358Z",
+    "updatedAt": "2025-11-14T22:58:35.508Z",
     "basePrices": {
       "internet": 50,
       "cable": 40,
       "duo": 80
     },
-    "neighborhoods": []
+    "neighborhoods": [
+      "San Juan",
+      "KONOHA"
+    ]
   },
   "clientExtended": [],
   "receipts": [],
